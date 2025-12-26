@@ -290,8 +290,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
                     ),
-                    ),
-                    const SizedBox(height: 32),
+                  ),
+                  ),
+                  const SizedBox(height: 32),
 
                     // Animated Demo Accounts Info
                     FadeTransition(
@@ -301,9 +302,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
@@ -335,6 +336,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ],
                         ),
                       ),
+                    ),
                     ),
                   ],
                 ),

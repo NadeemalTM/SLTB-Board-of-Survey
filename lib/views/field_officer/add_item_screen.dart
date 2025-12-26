@@ -147,12 +147,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
             children: [
               // Info Card
               Card(
-                color: Colors.blue[50],
+                color: const Color(0xFF2A2A2A),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color: Colors.blue[700]),
+                      const Icon(Icons.info, color: Colors.white70),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
@@ -318,9 +318,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
         width: 100,
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: const Color(0xFF3A3A3A)),
         ),
         child: imagePath != null && imagePath.isNotEmpty
             ? ClipRRect(

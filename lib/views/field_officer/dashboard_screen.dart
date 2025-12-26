@@ -302,26 +302,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Hero(
-            tag: 'addItemFAB',
-            child: FloatingActionButton.extended(
-              onPressed: _navigateToAddItem,
-              heroTag: 'addItem',
-              label: const Text('Add Item'),
-              icon: const Icon(Icons.add),
-              backgroundColor: Colors.orange,
-            ),
+          FloatingActionButton.extended(
+            onPressed: _navigateToAddItem,
+            heroTag: 'addItem',
+            label: const Text('Add Item'),
+            icon: const Icon(Icons.add),
+            backgroundColor: Colors.orange,
           ),
           const SizedBox(height: 12),
-          Hero(
-            tag: 'scanFAB',
-            child: FloatingActionButton.extended(
-              onPressed: _navigateToScan,
-              heroTag: 'scan',
-              label: const Text('Scan'),
-              icon: const Icon(Icons.qr_code_scanner),
-              backgroundColor: const Color(0xFF8B0000),
-            ),
+          FloatingActionButton.extended(
+            onPressed: _navigateToScan,
+            heroTag: 'scan',
+            label: const Text('Scan'),
+            icon: const Icon(Icons.qr_code_scanner),
+            backgroundColor: const Color(0xFF8B0000),
           ),
         ],
       ),
@@ -341,7 +335,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   title: 'Total Items',
                   value: stats.totalItems.toString(),
                   icon: Icons.inventory_2,
-                  color: Colors.blue,
+                  color: const Color(0xFF8B0000),
                 ),
               ),
               const SizedBox(width: 12),

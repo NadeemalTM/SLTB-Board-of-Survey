@@ -126,7 +126,7 @@ class _MergeFieldDataScreenState extends ConsumerState<MergeFieldDataScreen> {
                       'ℹ️ Matching is done using New Code field',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.blue[800],
+                        color: const Color(0xFF8B0000),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

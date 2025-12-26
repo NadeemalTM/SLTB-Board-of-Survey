@@ -180,7 +180,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                 icon: Icons.upload_file,
                 title: 'Import Master Data',
                 subtitle: 'Upload master CSV file with asset list',
-                color: Colors.blue,
+                color: const Color(0xFF8B0000),
                 onTap: () {
                   Navigator.push(
                     context,

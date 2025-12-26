@@ -72,10 +72,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo/Icon
+                    // Logo
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -87,10 +87,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.inventory_2,
-                        size: 64,
-                        color: Colors.blue[700],
+                      padding: const EdgeInsets.all(20),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'lib/img/logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),

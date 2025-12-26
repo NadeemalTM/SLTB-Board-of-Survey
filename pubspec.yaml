@@ -49,19 +49,17 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   riverpod_generator: ^2.3.9
   build_runner: ^2.4.7
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - lib/img/logo.png
 
-  # Add custom fonts if needed
-  # fonts:
-  #   - family: Roboto
-  #     fonts:
-  #       - asset: fonts/Roboto-Regular.ttf
-  #       - asset: fonts/Roboto-Bold.ttf
-  #         weight: 700
-
-  # Add app icon and splash screen assets
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/img/logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "lib/img/logo.png"

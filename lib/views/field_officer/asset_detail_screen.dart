@@ -261,7 +261,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: const Color(0xFF2A2A2A),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -381,7 +381,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
               label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.blue[700],
+                backgroundColor: const Color(0xFF8B0000),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -445,9 +445,9 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
         width: 100,
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: const Color(0xFF3A3A3A)),
         ),
         child: imagePath != null && imagePath.isNotEmpty
             ? ClipRRect(

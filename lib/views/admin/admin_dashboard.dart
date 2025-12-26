@@ -75,7 +75,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
               PopupMenuItem(
                 child: Row(
                   children: [
-                    Icon(Icons.person, color: Colors.blue[700]),
+                    const Icon(Icons.person, color: Colors.white),
                     const SizedBox(width: 8),
                     Text(authState.currentUser?.displayName ?? 'Admin'),
                   ],
@@ -117,11 +117,11 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                         children: [
                           CircleAvatar(
                             radius: 30,
-                            backgroundColor: Colors.blue[100],
+                            backgroundColor: const Color(0xFF8B0000),
                             child: Icon(
                               Icons.admin_panel_settings,
                               size: 32,
-                              color: Colors.blue[700],
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(width: 16),

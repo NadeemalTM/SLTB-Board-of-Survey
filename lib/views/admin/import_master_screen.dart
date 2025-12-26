@@ -89,7 +89,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
           children: [
             // Instructions Card
             Card(
-              color: Colors.blue[50],
+              color: const Color(0xFF2A2A2A),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -97,7 +97,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info, color: Colors.blue[700]),
+                        const Icon(Icons.info, color: Colors.white70),
                         const SizedBox(width: 8),
                         const Text(
                           'CSV Format Requirements',
@@ -206,7 +206,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
               label: Text(_isLoading ? 'Importing...' : 'Import Data'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.blue[700],
+                backgroundColor: const Color(0xFF8B0000),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -270,7 +270,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: const Color(0xFF2A2A2A),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(

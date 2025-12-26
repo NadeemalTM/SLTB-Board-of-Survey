@@ -9,6 +9,7 @@ import 'widgets/asset_list_item.dart';
 import 'widgets/filter_chip_bar.dart';
 import 'scan_screen.dart';
 import 'add_item_screen.dart';
+import '../auth/login_screen.dart';
 
 /// Field Officer Dashboard - Main home screen
 /// 
@@ -93,6 +94,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B0000),
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      ref.read(authProvider.notifier).logout();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardProvider);
@@ -110,9 +141,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authProvider.notifier).logout();
-            },
+            onPressed: _handleLogout,
             tooltip: 'Logout',
           ),
         ],
@@ -178,7 +207,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: const Color(0xFF2A2A2A),
                   ),
                   onChanged: _onSearch,
                 ),
@@ -233,13 +262,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.inbox, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
                         'No assets found',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
-                          color: Colors.grey[600],
+                          color: Colors.grey,
                         ),
                       ),
                     ],
@@ -273,19 +302,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton.extended(
-            onPressed: _navigateToAddItem,
-            heroTag: 'addItem',
-            label: const Text('Add Item'),
-            icon: const Icon(Icons.add),
-            backgroundColor: Colors.orange,
+          Hero(
+            tag: 'addItemFAB',
+            child: FloatingActionButton.extended(
+              onPressed: _navigateToAddItem,
+              heroTag: 'addItem',
+              label: const Text('Add Item'),
+              icon: const Icon(Icons.add),
+              backgroundColor: Colors.orange,
+            ),
           ),
           const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            onPressed: _navigateToScan,
-            heroTag: 'scan',
-            label: const Text('Scan'),
-            icon: const Icon(Icons.qr_code_scanner),
+          Hero(
+            tag: 'scanFAB',
+            child: FloatingActionButton.extended(
+              onPressed: _navigateToScan,
+              heroTag: 'scan',
+              label: const Text('Scan'),
+              icon: const Icon(Icons.qr_code_scanner),
+              backgroundColor: const Color(0xFF8B0000),
+            ),
           ),
         ],
       ),
@@ -393,7 +429,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   LinearProgressIndicator(
                     value: stats.completionPercentage / 100,
                     minHeight: 8,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: const Color(0xFF2A2A2A),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],

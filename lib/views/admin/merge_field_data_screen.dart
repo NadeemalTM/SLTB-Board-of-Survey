@@ -395,7 +395,7 @@ class _MergeFieldDataScreenState extends ConsumerState<MergeFieldDataScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.arrow_right, size: 20, color: Colors.blue[700]),
+          const Icon(Icons.arrow_right, size: 20, color: Colors.white70),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

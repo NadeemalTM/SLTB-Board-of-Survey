@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/asset_model.dart';
+import '../../data/models/asset_model.dart';
 
 /// CSV Helper - Handles CSV file parsing and generation
 /// 

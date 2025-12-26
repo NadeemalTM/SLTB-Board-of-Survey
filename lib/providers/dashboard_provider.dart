@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/database_helper.dart';
-import 'auth_provider.dart';
 
 /// Dashboard statistics
 class DashboardStats {

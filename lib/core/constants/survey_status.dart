@@ -1,19 +1,14 @@
-/// Survey status options for assets
-enum SurveyStatus {
-  good('Good', 'හොඳයි'),
-  broken('Broken', 'කැඩුණු'),
-  repairable('Repairable', 'අලුත්වැඩියා කළ හැකි'),
-  toBeDisposed('To be Disposed', 'ඉවත් කළ යුතු'),
-  newFound('New Found', 'අලුතින් හමු වූ');
-
-  final String englishLabel;
-  final String sinhalaLabel;
-
-  const SurveyStatus(this.englishLabel, this.sinhalaLabel);
-
-  static List<String> get allValues =>
-      SurveyStatus.values.map((e) => e.englishLabel).toList();
-
-  static List<String> get allSinhalaValues =>
-      SurveyStatus.values.map((e) => e.sinhalaLabel).toList();
+/// Survey status constants for assets
+class SurveyStatus {
+  static const String pending = 'Pending';
+  static const String verified = 'Verified';
+  static const String damaged = 'Damaged';
+  static const String missing = 'Missing';
+  
+  static List<String> get allValues => [
+        pending,
+        verified,
+        damaged,
+        missing,
+      ];
 }

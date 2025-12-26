@@ -53,13 +53,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.blue[700]!,
-              Colors.blue[900]!,
+              Color(0xFF8B0000),
+              Color(0xFF2D0000),
             ],
           ),
         ),
@@ -74,25 +74,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     // Logo
                     Container(
-                      width: 140,
-                      height: 140,
+                      width: 160,
+                      height: 160,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 30,
                             offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(20),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'lib/img/logo.png',
-                          fit: BoxFit.contain,
-                        ),
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(
+                        'lib/img/logo.png',
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -220,7 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   authState.isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: Colors.blue[700],
+                                backgroundColor: const Color(0xFF8B0000),
                                 foregroundColor: Colors.white,
                               ),
                               child: authState.isLoading

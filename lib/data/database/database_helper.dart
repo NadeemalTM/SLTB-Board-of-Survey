@@ -342,42 +342,57 @@ class DatabaseHelper {
 
   /// Merge field officer CSV data into existing records
   /// Updates matching records based on new_code
-  Future<int> mergeFieldOfficerCsv(List<AssetModel> assets) async {
+  Future<Map<String, dynamic>> mergeFieldOfficerCsv(List<AssetModel> assets) async {
     try {
       final db = await database;
       int updatedCount = 0;
+      int insertedCount = 0;
+      int notFoundCount = 0;
+      int failedCount = 0;
 
       await db.transaction((txn) async {
         for (var asset in assets) {
-          // Try to find existing record by new_code
-          final existing = await txn.query(
-            DatabaseConstants.assetsTable,
-            where: '${DatabaseConstants.columnNewCode} = ?',
-            whereArgs: [asset.newCode],
-          );
-
-          if (existing.isNotEmpty) {
-            // Update existing record
-            await txn.update(
+          try {
+            // Try to find existing record by new_code
+            final existing = await txn.query(
               DatabaseConstants.assetsTable,
-              asset.toMap(),
               where: '${DatabaseConstants.columnNewCode} = ?',
               whereArgs: [asset.newCode],
             );
-            updatedCount++;
-          } else {
-            // Insert as new item if not found
-            await txn.insert(
-              DatabaseConstants.assetsTable,
-              asset.toMap(),
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-            updatedCount++;
+
+            if (existing.isNotEmpty) {
+              // Update existing record
+              await txn.update(
+                DatabaseConstants.assetsTable,
+                asset.toMap(),
+                where: '${DatabaseConstants.columnNewCode} = ?',
+                whereArgs: [asset.newCode],
+              );
+              updatedCount++;
+            } else if (asset.isNewItem == 1) {
+              // Insert as new item if marked as new
+              await txn.insert(
+                DatabaseConstants.assetsTable,
+                asset.toMap(),
+                conflictAlgorithm: ConflictAlgorithm.replace,
+              );
+              insertedCount++;
+            } else {
+              // Asset not found in master list
+              notFoundCount++;
+            }
+          } catch (e) {
+            failedCount++;
           }
         }
       });
 
-      return updatedCount;
+      return {
+        'updated': updatedCount,
+        'inserted': insertedCount,
+        'notFound': notFoundCount,
+        'failed': failedCount,
+      };
     } catch (e) {
       throw Exception('Failed to merge field officer CSV: $e');
     }

@@ -56,17 +56,17 @@ class FilterChipBar extends StatelessWidget {
           const SizedBox(width: 16),
 
           // Status filters
-          ...SurveyStatus.values.map((status) {
+          ...SurveyStatus.allValues.map((status) {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _buildFilterChip(
-                label: status.englishLabel,
-                isSelected: selectedStatus == status.englishLabel,
+                label: status,
+                isSelected: selectedStatus == status,
                 onTap: () {
-                  if (selectedStatus == status.englishLabel) {
+                  if (selectedStatus == status) {
                     onStatusChanged(null);
                   } else {
-                    onStatusChanged(status.englishLabel);
+                    onStatusChanged(status);
                   }
                 },
               ),

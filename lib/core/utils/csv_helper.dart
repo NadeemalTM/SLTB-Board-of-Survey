@@ -165,49 +165,35 @@ class CsvHelper {
   /// Generate CSV file for field officer export
   /// Contains only modified/added assets
   static String generateFieldOfficerCsv(List<AssetModel> assets) {
-    try {
-      List<List<dynamic>> rows = [];
+    List<List<dynamic>> rows = [];
 
-      // Add header row
-      rows.add(fieldOfficerCsvHeaders);
+    // Add header row
+    rows.add(fieldOfficerCsvHeaders);
 
-      // Add data rows
-      for (var asset in assets) {
-        rows.add(asset.toCsvRow());
-      }
-
-      // Convert to CSV string
-      String csvString = const ListToCsvConverter().convert(rows);
-
-      // Save to file
-      final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-      final fileName = 'field_export_${username}_$timestamp.csv';
-      final filePath = '${directory.path}/$fileName';
-
-      final file = File(filePath);
-      await file.writeAsString(csvString);
-
-      return filePath;
-    } catch (e) {
-      throw Exception('Failed to generate field officer CSV: $e');
+    // Add data rows
+    for (var asset in assets) {
+      rows.add(asset.toCsvRow());
     }
+
+    // Convert to CSV string
+    return const ListToCsvConverter().convert(rows);
   }
 
   /// Generate CSV file for admin final report
   /// Contains all assets with complete survey data
-  static String generateAdminReportCsv(List<AssetModel> assets) {\n    List<List<dynamic>> rows = [];\n\n    // Add header row\n    rows.add(fieldOfficerCsvHeaders);\n\n    // Add data rows\n    for (var asset in assets) {\n      rows.add(asset.toCsvRow());\n    }\n\n    // Convert to CSV string\n    return const ListToCsvConverter().convert(rows);\n  }
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-      final fileName = 'final_report_$timestamp.csv';
-      final filePath = '${directory.path}/$fileName';
+  static String generateAdminReportCsv(List<AssetModel> assets) {
+    List<List<dynamic>> rows = [];
 
-      final file = File(filePath);
-      await file.writeAsString(csvString);
+    // Add header row
+    rows.add(fieldOfficerCsvHeaders);
 
-      return filePath;
-    } catch (e) {
-      throw Exception('Failed to generate admin report CSV: $e');
+    // Add data rows
+    for (var asset in assets) {
+      rows.add(asset.toCsvRow());
     }
+
+    // Convert to CSV string
+    return const ListToCsvConverter().convert(rows);
   }
 
   /// Export CSV to external storage (Downloads folder)

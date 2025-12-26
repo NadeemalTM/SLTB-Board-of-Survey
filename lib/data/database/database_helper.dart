@@ -15,6 +15,9 @@ class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
+  
+  /// Static getter for instance (used by UI)
+  static DatabaseHelper get instance => _instance;
 
   static Database? _database;
 

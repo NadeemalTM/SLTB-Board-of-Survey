@@ -11,4 +11,6 @@ class SurveyStatus {
         damaged,
         missing,
       ];
+  
+  static List<String> get values => allValues;
 }

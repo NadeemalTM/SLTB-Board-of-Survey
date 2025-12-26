@@ -43,14 +43,13 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
 
     try {
       // Validate CSV format
-      final validationResult =
-          await CsvHelper.validateMasterCsv(_selectedFilePath!);
+      final isValid = await CsvHelper.validateMasterCsv(_selectedFilePath!);
 
-      if (!validationResult['isValid']) {
+      if (!isValid) {
         setState(() {
           _isLoading = false;
           _isSuccess = false;
-          _resultMessage = validationResult['error'] ?? 'Invalid CSV format';
+          _resultMessage = 'Invalid CSV format. Please check the file structure.';
         });
         return;
       }

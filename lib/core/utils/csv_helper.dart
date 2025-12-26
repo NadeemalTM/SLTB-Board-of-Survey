@@ -164,10 +164,7 @@ class CsvHelper {
 
   /// Generate CSV file for field officer export
   /// Contains only modified/added assets
-  static Future<String> generateFieldOfficerCsv(
-    List<AssetModel> assets,
-    String username,
-  ) async {
+  static String generateFieldOfficerCsv(List<AssetModel> assets) {
     try {
       List<List<dynamic>> rows = [];
 
@@ -199,23 +196,7 @@ class CsvHelper {
 
   /// Generate CSV file for admin final report
   /// Contains all assets with complete survey data
-  static Future<String> generateAdminReportCsv(List<AssetModel> assets) async {
-    try {
-      List<List<dynamic>> rows = [];
-
-      // Add header row (Sinhala)
-      rows.add(adminReportCsvHeaders);
-
-      // Add data rows
-      for (var asset in assets) {
-        rows.add(asset.toCsvRow());
-      }
-
-      // Convert to CSV string
-      String csvString = const ListToCsvConverter().convert(rows);
-
-      // Save to file
-      final directory = await getApplicationDocumentsDirectory();
+  static String generateAdminReportCsv(List<AssetModel> assets) {\n    List<List<dynamic>> rows = [];\n\n    // Add header row\n    rows.add(fieldOfficerCsvHeaders);\n\n    // Add data rows\n    for (var asset in assets) {\n      rows.add(asset.toCsvRow());\n    }\n\n    // Convert to CSV string\n    return const ListToCsvConverter().convert(rows);\n  }
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
       final fileName = 'final_report_$timestamp.csv';
       final filePath = '${directory.path}/$fileName';
@@ -231,7 +212,10 @@ class CsvHelper {
 
   /// Export CSV to external storage (Downloads folder)
   /// Returns the new file path
-  static Future<String> exportToDownloads(String sourcePath) async {
+  static Future<String> exportToDownloads(
+    String csvContent,
+    String filename,
+  ) async {
     try {
       // Get external storage directory (Android)
       // For iOS, this will use the app's documents directory
@@ -250,11 +234,9 @@ class CsvHelper {
         throw Exception('Could not access external storage');
       }
 
-      final sourceFile = File(sourcePath);
-      final fileName = sourcePath.split('/').last;
-      final destPath = '${externalDir.path}/$fileName';
-
-      await sourceFile.copy(destPath);
+      final destPath = '${externalDir.path}/$filename.csv';
+      final file = File(destPath);
+      await file.writeAsString(csvContent);
       return destPath;
     } catch (e) {
       throw Exception('Failed to export to downloads: $e');

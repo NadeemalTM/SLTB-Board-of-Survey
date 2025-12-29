@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Green & Gold Colors
-  static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color secondaryGold = Color(0xFFFFD700);
-  static const Color darkGreen = Color(0xFF1B5E20);
-  static const Color lightGreen = Color(0xFF66BB6A);
-  static const Color amberGold = Color(0xFFFFC107);
+  // Custom Colors - Teal Green & Brown-Tan
+  static const Color primaryGreen = Color(0xFF0C3B2E);
+  static const Color secondaryGold = Color(0xFFbb8a52);
+  static const Color darkGreen = Color(0xFF0C3B2E);
+  static const Color lightGreen = Color(0xFF0C3B2E);
+  static const Color amberGold = Color(0xFFbb8a52);
 
   // Light Theme
   static ThemeData lightTheme = ThemeData(

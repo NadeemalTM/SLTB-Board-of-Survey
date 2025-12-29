@@ -97,13 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-<<<<<<< HEAD
-              Color.fromARGB(255, 17, 82, 63),
-              Color.fromARGB(255, 7, 32, 25),
-=======
-              Color(0xFF66BB6A),
-              Color(0xFFA5D6A7),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
+              Color(0xFF0C3B2E),
+              Color(0xFF051A14),
             ],
           ),
         ),
@@ -244,34 +239,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                                 const SizedBox(height: 24),
 
-<<<<<<< HEAD
-                            // Login Button
-                            ElevatedButton(
-                              onPressed:
-                                  authState.isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: const Color(0xFFbb8a52),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: authState.isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-=======
                                 // Error Message
                                 if (authState.errorMessage != null)
                                   Container(
@@ -281,7 +248,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       borderRadius: BorderRadius.circular(8),
                                       border:
                                           Border.all(color: Colors.red[300]!),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                                     ),
                                     child: Row(
                                       children: [
@@ -308,7 +274,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 16),
-                                    backgroundColor: const Color(0xFF8B0000),
+                                    backgroundColor: const Color(0xFF0C3B2E),
                                     foregroundColor: Colors.white,
                                   ),
                                   child: authState.isLoading

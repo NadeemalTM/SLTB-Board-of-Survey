@@ -75,11 +75,7 @@ class AssetListItem extends StatelessWidget {
                             const SizedBox(width: 8),
                             _buildChip(
                               label: '${asset.imageCount} 📷',
-<<<<<<< HEAD
                               color: const Color(0xFF0C3B2E),
-=======
-                              color: const Color(0xFF2E7D32),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                             ),
                           ],
                         ] else

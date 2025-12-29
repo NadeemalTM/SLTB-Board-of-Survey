@@ -118,11 +118,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                         children: [
                           CircleAvatar(
                             radius: 30,
-<<<<<<< HEAD
                             backgroundColor: const Color(0xFF0C3B2E),
-=======
-                            backgroundColor: const Color(0xFF2E7D32),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                             child: Icon(
                               Icons.admin_panel_settings,
                               size: 32,
@@ -186,11 +182,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                 icon: Icons.upload_file,
                 title: 'Import Master Data',
                 subtitle: 'Upload master CSV file with asset list',
-<<<<<<< HEAD
                 color: const Color(0xFF0C3B2E),
-=======
-                color: const Color(0xFF2E7D32),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                 onTap: () {
                   Navigator.push(
                     context,

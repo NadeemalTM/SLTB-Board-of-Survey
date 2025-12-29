@@ -205,11 +205,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
               label: Text(_isLoading ? 'Importing...' : 'Import Data'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-<<<<<<< HEAD
                 backgroundColor: const Color(0xFF0C3B2E),
-=======
-                backgroundColor: const Color(0xFF2E7D32),
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                 foregroundColor: Colors.white,
               ),
             ),

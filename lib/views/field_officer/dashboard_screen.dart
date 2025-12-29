@@ -407,10 +407,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           _selectedSurveyFilter != null
                       ? 'Try adjusting your search or filters'
                       : 'Start by scanning QR codes or adding items manually',
-                  actionLabel:
-                      assetListState.searchQuery == null ? 'Add First Item' : null,
-                  onAction:
-                      assetListState.searchQuery == null ? _navigateToAddItem : null,
+                  actionLabel: assetListState.searchQuery == null
+                      ? 'Add First Item'
+                      : null,
+                  onAction: assetListState.searchQuery == null
+                      ? _navigateToAddItem
+                      : null,
                 ),
               )
             else

@@ -88,9 +88,8 @@ class _CircularProgressCardState extends State<CircularProgressCard>
                   painter: CircularProgressPainter(
                     progress: percentage * _animation.value,
                     color: widget.color,
-                    backgroundColor: isDark
-                        ? Colors.grey[800]!
-                        : Colors.grey[200]!,
+                    backgroundColor:
+                        isDark ? Colors.grey[800]! : Colors.grey[200]!,
                   ),
                   child: SizedBox(
                     width: 120,

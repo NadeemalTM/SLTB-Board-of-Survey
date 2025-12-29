@@ -68,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     if (success && mounted) {
       final authState = ref.read(authProvider);
-      
+
       // Navigate based on role
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -91,8 +91,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8B0000),
-              Color(0xFF2D0000),
+              Color(0xFF66BB6A),
+              Color(0xFFA5D6A7),
             ],
           ),
         ),
@@ -116,8 +116,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           decoration: BoxDecoration(
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
-                                blurRadius: 30,
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
                             ],
@@ -170,129 +170,133 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           child: Padding(
                             padding: const EdgeInsets.all(24.0),
                             child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Username Field
-                            TextFormField(
-                              controller: _usernameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Username',
-                                prefixIcon: Icon(Icons.person),
-                                hintText: 'Enter your username',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter username';
-                                }
-                                return null;
-                              },
-                              enabled: !authState.isLoading,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: !_isPasswordVisible,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock),
-                                hintText: 'Enter your password',
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Username Field
+                                TextFormField(
+                                  controller: _usernameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Username',
+                                    prefixIcon: Icon(Icons.person),
+                                    hintText: 'Enter your username',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter username';
+                                    }
+                                    return null;
                                   },
+                                  enabled: !authState.isLoading,
                                 ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter password';
-                                }
-                                return null;
-                              },
-                              enabled: !authState.isLoading,
-                              onFieldSubmitted: (_) => _handleLogin(),
-                            ),
-                            const SizedBox(height: 24),
+                                const SizedBox(height: 16),
 
-                            // Error Message
-                            if (authState.errorMessage != null)
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red[50],
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.red[200]!),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.error_outline,
-                                        color: Colors.red[700]),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        authState.errorMessage!,
-                                        style: TextStyle(color: Colors.red[700]),
+                                // Password Field
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: !_isPasswordVisible,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: const Icon(Icons.lock),
+                                    hintText: 'Enter your password',
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordVisible
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
                                       ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
                                     ),
-                                  ],
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter password';
+                                    }
+                                    return null;
+                                  },
+                                  enabled: !authState.isLoading,
+                                  onFieldSubmitted: (_) => _handleLogin(),
                                 ),
-                              ),
-                            if (authState.errorMessage != null)
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 24),
 
-                            // Login Button
-                            ElevatedButton(
-                              onPressed:
-                                  authState.isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: const Color(0xFF8B0000),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: authState.isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                // Error Message
+                                if (authState.errorMessage != null)
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border:
+                                          Border.all(color: Colors.red[300]!),
                                     ),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.error_outline,
+                                            color: Colors.red[700]),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            authState.errorMessage!,
+                                            style: TextStyle(
+                                                color: Colors.red[700]),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (authState.errorMessage != null)
+                                  const SizedBox(height: 16),
+
+                                // Login Button
+                                ElevatedButton(
+                                  onPressed:
+                                      authState.isLoading ? null : _handleLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    backgroundColor: const Color(0xFF8B0000),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: authState.isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Login',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
                     // Animated Demo Accounts Info
                     FadeTransition(
@@ -305,38 +309,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.info_outline,
-                                    size: 20, color: Colors.white70),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Demo Accounts',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.info_outline,
+                                      size: 20, color: Color(0xFFFFD700)),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Demo Accounts',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildAccountInfo(
-                              'Admin',
-                              'admin / admin123',
-                              Icons.admin_panel_settings,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildAccountInfo(
-                              'Field Officer',
-                              'officer01 - officer10 / field123',
-                              Icons.person,
-                            ),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildAccountInfo(
+                                'Admin',
+                                'admin / admin123',
+                                Icons.admin_panel_settings,
+                              ),
+                              const SizedBox(height: 8),
+                              _buildAccountInfo(
+                                'Field Officer',
+                                'officer01 - officer10 / field123',
+                                Icons.person,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     ),
                   ],
                 ),

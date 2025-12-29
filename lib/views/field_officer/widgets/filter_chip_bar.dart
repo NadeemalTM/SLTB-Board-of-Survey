@@ -86,11 +86,11 @@ class FilterChipBar extends StatelessWidget {
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      backgroundColor: const Color(0xFF2A2A2A),
-      selectedColor: const Color(0xFF8B0000),
+      backgroundColor: Colors.grey[100],
+      selectedColor: const Color(0xFF2E7D32),
       checkmarkColor: Colors.white,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.grey,
+        color: isSelected ? Colors.white : Colors.black87,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );

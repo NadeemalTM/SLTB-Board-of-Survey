@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../widgets/theme_toggle_button.dart';
 import '../auth/login_screen.dart';
 import 'import_master_screen.dart';
 import 'export_report_screen.dart';
@@ -117,7 +118,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                         children: [
                           CircleAvatar(
                             radius: 30,
-                            backgroundColor: const Color(0xFF8B0000),
+                            backgroundColor: const Color(0xFF2E7D32),
                             child: Icon(
                               Icons.admin_panel_settings,
                               size: 32,
@@ -137,11 +138,12 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                                   ),
                                 ),
                                 Text(
-                                  authState.currentUser?.role.name.toUpperCase() ??
+                                  authState.currentUser?.role.name
+                                          .toUpperCase() ??
                                       'ADMINISTRATOR',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey[600],
+                                    color: Colors.grey[700],
                                   ),
                                 ),
                               ],
@@ -180,7 +182,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                 icon: Icons.upload_file,
                 title: 'Import Master Data',
                 subtitle: 'Upload master CSV file with asset list',
-                color: const Color(0xFF8B0000),
+                color: const Color(0xFF2E7D32),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -220,6 +222,9 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                   );
                 },
               ),
+              const SizedBox(height: 16),
+              const ThemeToggleButton(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -253,13 +258,13 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
           'Pending',
           stats.pendingItems.toString(),
           Icons.pending,
-          Colors.orange,
+          const Color(0xFFFFD700),
         ),
         _buildStatCard(
           'Progress',
           '${stats.completionPercentage.toStringAsFixed(1)}%',
           Icons.trending_up,
-          Colors.purple,
+          const Color(0xFFFFC107),
         ),
       ],
     );

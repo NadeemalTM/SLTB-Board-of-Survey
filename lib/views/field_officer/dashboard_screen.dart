@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/asset_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../core/constants/survey_status.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/statistic_overview_card.dart';
+import '../../widgets/quick_actions_bar.dart';
+import '../../widgets/enhanced_search_bar.dart';
+import '../../widgets/loading_skeleton.dart';
+import '../../widgets/empty_state.dart';
 import 'widgets/summary_card.dart';
 import 'widgets/asset_list_item.dart';
 import 'widgets/filter_chip_bar.dart';
@@ -12,7 +17,7 @@ import 'add_item_screen.dart';
 import '../auth/login_screen.dart';
 
 /// Field Officer Dashboard - Main home screen
-/// 
+///
 /// Features:
 /// - Summary cards with statistics
 /// - Search bar
@@ -76,21 +81,124 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _navigateToScan() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ScanScreen()),
-    ).then((_) => _onRefresh());
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(builder: (_) => const ScanScreen()),
+        )
+        .then((_) => _onRefresh());
   }
 
   void _navigateToAddItem() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddItemScreen()),
-    ).then((_) => _onRefresh());
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(builder: (_) => const AddItemScreen()),
+        )
+        .then((_) => _onRefresh());
   }
 
   void _showExportDialog() {
-    // TODO: Implement CSV export dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Export functionality coming soon')),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.download, color: Color(0xFF2E7D32)),
+            SizedBox(width: 12),
+            Text('Export Data'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Export your survey data to CSV format.'),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.file_present, color: Color(0xFFFFD700)),
+              title: const Text('Export All Data'),
+              subtitle: const Text('Complete survey records'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Exporting all data...'),
+                    backgroundColor: Color(0xFF2E7D32),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.check_circle, color: Colors.green),
+              title: const Text('Export Completed Only'),
+              subtitle: const Text('Surveyed items only'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Exporting completed data...'),
+                    backgroundColor: Color(0xFF2E7D32),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showImportOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Import Data',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF2E7D32),
+                child: Icon(Icons.file_upload, color: Colors.white),
+              ),
+              title: const Text('Import CSV'),
+              subtitle: const Text('Import master data from CSV file'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('CSV import coming soon')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -173,43 +281,65 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
 
+            // Statistics Overview Card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: dashboardState.isLoading
+                    ? const StatCardSkeleton()
+                    : StatisticOverviewCard(
+                        totalItems: dashboardState.stats.totalItems,
+                        surveyedItems: dashboardState.stats.surveyedItems,
+                        pendingItems: dashboardState.stats.pendingItems,
+                        completionPercentage:
+                            dashboardState.stats.completionPercentage,
+                      ),
+              ),
+            ),
+
+            // Quick Actions Bar
+            SliverToBoxAdapter(
+              child: QuickActionsBar(
+                onScan: _navigateToScan,
+                onAdd: _navigateToAddItem,
+                onExport: _showExportDialog,
+                onImport: () => _showImportOptions(context),
+              ),
+            ),
+
             // Summary cards
             SliverToBoxAdapter(
               child: dashboardState.isLoading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: CircularProgressIndicator(),
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(child: StatCardSkeleton()),
+                          SizedBox(width: 8),
+                          Expanded(child: StatCardSkeleton()),
+                          SizedBox(width: 8),
+                          Expanded(child: StatCardSkeleton()),
+                        ],
                       ),
                     )
                   : _buildSummaryCards(dashboardState.stats),
             ),
 
-            // Search bar
+            // Enhanced Search bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
+                padding: const EdgeInsets.all(16.0),
+                child: EnhancedSearchBar(
                   controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search by code or description...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearch('');
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-                  ),
-                  onChanged: _onSearch,
+                  onSearch: _onSearch,
+                  onClear: _clearFilters,
+                  hintText: 'Search by asset code or description...',
+                  suggestions: const [
+                    'Surveyed items',
+                    'Pending items',
+                    'Good condition',
+                    'Broken items',
+                  ],
                 ),
               ),
             ),
@@ -253,26 +383,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
             // Asset list
             if (assetListState.isLoading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const AssetListSkeleton(),
+                  childCount: 5,
+                ),
               )
             else if (assetListState.assets.isEmpty)
               SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No assets found',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: EmptyStateWidget(
+                  icon: assetListState.searchQuery != null ||
+                          _selectedStatus != null ||
+                          _selectedSurveyFilter != null
+                      ? Icons.search_off
+                      : Icons.inventory_2,
+                  title: assetListState.searchQuery != null ||
+                          _selectedStatus != null ||
+                          _selectedSurveyFilter != null
+                      ? 'No Results Found'
+                      : 'No Assets Yet',
+                  message: assetListState.searchQuery != null ||
+                          _selectedStatus != null ||
+                          _selectedSurveyFilter != null
+                      ? 'Try adjusting your search or filters'
+                      : 'Start by scanning QR codes or adding items manually',
+                  actionLabel:
+                      assetListState.searchQuery == null ? 'Add First Item' : null,
+                  onAction:
+                      assetListState.searchQuery == null ? _navigateToAddItem : null,
                 ),
               )
             else
@@ -299,6 +437,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: const ThemeToggleButton(),
+      ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -307,7 +449,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             heroTag: 'addItem',
             label: const Text('Add Item'),
             icon: const Icon(Icons.add),
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFFFD700),
+            foregroundColor: Colors.black,
           ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
@@ -315,7 +458,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             heroTag: 'scan',
             label: const Text('Scan'),
             icon: const Icon(Icons.qr_code_scanner),
-            backgroundColor: const Color(0xFF8B0000),
+            backgroundColor: const Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
           ),
         ],
       ),
@@ -353,7 +497,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   title: 'Pending',
                   value: stats.pendingItems.toString(),
                   icon: Icons.pending,
-                  color: Colors.orange,
+                  color: const Color(0xFFFFD700),
                 ),
               ),
             ],
@@ -386,7 +530,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   title: 'Repairable',
                   value: stats.repairableCount.toString(),
                   icon: Icons.build,
-                  color: Colors.amber,
+                  color: const Color(0xFFFFC107),
                 ),
               ),
             ],
@@ -423,7 +567,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   LinearProgressIndicator(
                     value: stats.completionPercentage / 100,
                     minHeight: 8,
-                    backgroundColor: const Color(0xFF2A2A2A),
+                    backgroundColor: Colors.grey[200],
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],

@@ -9,8 +9,7 @@ class ImportMasterScreen extends ConsumerStatefulWidget {
   const ImportMasterScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<ImportMasterScreen> createState() =>
-      _ImportMasterScreenState();
+  ConsumerState<ImportMasterScreen> createState() => _ImportMasterScreenState();
 }
 
 class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
@@ -49,7 +48,8 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
         setState(() {
           _isLoading = false;
           _isSuccess = false;
-          _resultMessage = 'Invalid CSV format. Please check the file structure.';
+          _resultMessage =
+              'Invalid CSV format. Please check the file structure.';
         });
         return;
       }
@@ -89,7 +89,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
           children: [
             // Instructions Card
             Card(
-              color: const Color(0xFF2A2A2A),
+              color: Colors.blue[50],
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -97,7 +97,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.info, color: Colors.white70),
+                        const Icon(Icons.info, color: Colors.blue),
                         const SizedBox(width: 8),
                         const Text(
                           'CSV Format Requirements',
@@ -124,7 +124,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                       '⚠️ Warning: Importing will replace existing master data',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.orange[800],
+                        color: Colors.orange[900],
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -167,7 +167,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                           fontSize: 14,
                           color: _selectedFilePath != null
                               ? Colors.black87
-                              : Colors.grey,
+                              : Colors.grey[600],
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -190,9 +190,8 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
 
             // Import Button
             ElevatedButton.icon(
-              onPressed: _selectedFilePath != null && !_isLoading
-                  ? _importData
-                  : null,
+              onPressed:
+                  _selectedFilePath != null && !_isLoading ? _importData : null,
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -206,7 +205,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
               label: Text(_isLoading ? 'Importing...' : 'Import Data'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF8B0000),
+                backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -220,8 +219,7 @@ class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
                   color: _isSuccess ? Colors.green[50] : Colors.red[50],
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color:
-                        _isSuccess ? Colors.green[200]! : Colors.red[200]!,
+                    color: _isSuccess ? Colors.green[200]! : Colors.red[200]!,
                   ),
                 ),
                 child: Row(

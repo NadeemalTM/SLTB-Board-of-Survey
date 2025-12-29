@@ -41,7 +41,7 @@ class _ScanScreenState extends State<ScanScreen> {
             builder: (_) => AssetDetailScreen(asset: asset),
           ),
         );
-        
+
         // Return to dashboard after update
         if (mounted) {
           Navigator.pop(context);
@@ -150,7 +150,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 child: const Text(
                   'Align barcode within frame',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black87,
                     fontSize: 16,
                   ),
                   textAlign: TextAlign.center,

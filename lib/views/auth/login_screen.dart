@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../admin/admin_dashboard.dart';
 import '../field_officer/dashboard_screen.dart';
+import '../region_officer/region_dashboard.dart';
 
 /// Login Screen - Entry point for authentication
 class LoginScreen extends ConsumerStatefulWidget {
@@ -70,12 +71,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       final authState = ref.read(authProvider);
       
       // Navigate based on role
+      Widget nextScreen;
+      if (authState.isAdmin) {
+        nextScreen = const AdminDashboard();
+      } else if (authState.isRegionOfficer) {
+        nextScreen = const RegionDashboard();
+      } else {
+        nextScreen = const DashboardScreen();
+      }
+      
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => authState.isAdmin
-              ? const AdminDashboard()
-              : const DashboardScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => nextScreen),
       );
     }
   }
@@ -91,8 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8B0000),
-              Color(0xFF2D0000),
+              Color.fromARGB(255, 17, 82, 63),
+              Color.fromARGB(255, 7, 32, 25),
             ],
           ),
         ),
@@ -264,7 +270,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   authState.isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: const Color(0xFF8B0000),
+                                backgroundColor: const Color(0xFFbb8a52),
                                 foregroundColor: Colors.white,
                               ),
                               child: authState.isLoading

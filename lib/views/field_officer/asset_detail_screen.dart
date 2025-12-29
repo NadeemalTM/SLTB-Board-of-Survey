@@ -381,7 +381,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
               label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF8B0000),
+                backgroundColor: const Color(0xFF0C3B2E),
                 foregroundColor: Colors.white,
               ),
             ),

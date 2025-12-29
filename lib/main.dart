@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF8B0000),
-          secondary: const Color(0xFFB22222),
+          primary: const Color(0xFF0C3B2E),
+          secondary: const Color(0xFFbb8a52),
           surface: const Color(0xFF1A1A1A),
           background: const Color(0xFF121212),
           error: const Color(0xFFCF6679),
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            backgroundColor: const Color(0xFF8B0000),
+            backgroundColor: const Color(0xFF0C3B2E),
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

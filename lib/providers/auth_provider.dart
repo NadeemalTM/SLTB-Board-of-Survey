@@ -16,6 +16,7 @@ class AuthState {
   bool get isAuthenticated => currentUser != null;
   bool get isAdmin => currentUser?.isAdmin ?? false;
   bool get isFieldOfficer => currentUser?.isFieldOfficer ?? false;
+  bool get isRegionOfficer => currentUser?.isRegionOfficer ?? false;
 
   AuthState copyWith({
     UserModel? currentUser,

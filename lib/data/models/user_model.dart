@@ -2,6 +2,7 @@
 enum UserRole {
   admin,
   fieldOfficer,
+  regionOfficer,
 }
 
 /// User model for local authentication
@@ -20,6 +21,7 @@ class UserModel {
 
   bool get isAdmin => role == UserRole.admin;
   bool get isFieldOfficer => role == UserRole.fieldOfficer;
+  bool get isRegionOfficer => role == UserRole.regionOfficer;
 }
 
 /// Hardcoded user accounts for local authentication
@@ -96,8 +98,16 @@ class AppUsers {
     ),
   ];
 
-  /// Get all users (admin + field officers)
-  static List<UserModel> get allUsers => [admin, ...fieldOfficers];
+  // Region Officer account
+  static const UserModel regionOfficer = UserModel(
+    username: 'regoff',
+    password: '123',
+    role: UserRole.regionOfficer,
+    displayName: 'Region Officer',
+  );
+
+  /// Get all users (admin + field officers + region officer)
+  static List<UserModel> get allUsers => [admin, ...fieldOfficers, regionOfficer];
 
   /// Authenticate user
   static UserModel? authenticate(String username, String password) {

@@ -256,7 +256,7 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B0000),
+                            color: const Color(0xFF0C3B2E),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -307,7 +307,7 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
                       label: const Text('Generate for Field Officer'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: const Color(0xFF8B0000),
+                        backgroundColor: const Color(0xFF0C3B2E),
                         foregroundColor: Colors.white,
                       ),
                     ),

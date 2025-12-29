@@ -86,16 +86,16 @@ class _SummaryCardState extends State<SummaryCard>
               const SizedBox(height: 4),
               Text(
                 widget.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: Colors.grey[700],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

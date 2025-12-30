@@ -36,7 +36,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
   void initState() {
     super.initState();
     _physicalBalanceController = TextEditingController(
-      text: widget.asset.physicalBalance?.toString() ?? '',
+      text: widget.asset.physicalBalance.toString(),
     );
     _remarksController = TextEditingController(
       text: widget.asset.remarks ?? '',
@@ -112,7 +112,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
       final username = authState.currentUser?.username ?? 'unknown';
 
       // Calculate excess/shortage
-      final bookBalance = widget.asset.bookBalance ?? 0;
+      final bookBalance = widget.asset.bookBalance;
       final excess = physicalBalance > bookBalance
           ? physicalBalance - bookBalance
           : 0;
@@ -172,7 +172,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bookBalance = widget.asset.bookBalance ?? 0;
+    final bookBalance = widget.asset.bookBalance;
     final physicalBalance = int.tryParse(_physicalBalanceController.text) ?? 0;
     final excess = physicalBalance > bookBalance ? physicalBalance - bookBalance : 0;
     final shortage = physicalBalance < bookBalance ? bookBalance - physicalBalance : 0;

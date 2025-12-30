@@ -65,6 +65,11 @@ class DatabaseHelper {
         ${DatabaseConstants.columnImagePath1} TEXT,
         ${DatabaseConstants.columnImagePath2} TEXT,
         ${DatabaseConstants.columnImagePath3} TEXT,
+        ${DatabaseConstants.columnEnteredBy} TEXT,
+        ${DatabaseConstants.columnEnteredDate} TEXT,
+        ${DatabaseConstants.columnVerifiedBy} TEXT,
+        ${DatabaseConstants.columnVerifiedDate} TEXT,
+        ${DatabaseConstants.columnVerificationStatus} TEXT DEFAULT 'pending',
         ${DatabaseConstants.columnLastUpdatedBy} TEXT,
         ${DatabaseConstants.columnLastUpdatedDate} TEXT,
         ${DatabaseConstants.columnIsNewItem} INTEGER DEFAULT 0
@@ -81,14 +86,48 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE INDEX idx_verification_status ON ${DatabaseConstants.assetsTable}(${DatabaseConstants.columnVerificationStatus})
+    ''');
+
+    await db.execute('''
       CREATE INDEX idx_last_updated_by ON ${DatabaseConstants.assetsTable}(${DatabaseConstants.columnLastUpdatedBy})
     ''');
   }
 
   /// Handle database upgrades (for future versions)
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle schema migrations here when version changes
-    // Example: if (oldVersion < 2) { /* add new column */ }
+    // Handle schema migrations for version 2 (new workflow fields)
+    if (oldVersion < 2) {
+      await db.execute('''
+        ALTER TABLE ${DatabaseConstants.assetsTable} 
+        ADD COLUMN ${DatabaseConstants.columnEnteredBy} TEXT
+      ''');
+      
+      await db.execute('''
+        ALTER TABLE ${DatabaseConstants.assetsTable} 
+        ADD COLUMN ${DatabaseConstants.columnEnteredDate} TEXT
+      ''');
+      
+      await db.execute('''
+        ALTER TABLE ${DatabaseConstants.assetsTable} 
+        ADD COLUMN ${DatabaseConstants.columnVerifiedBy} TEXT
+      ''');
+      
+      await db.execute('''
+        ALTER TABLE ${DatabaseConstants.assetsTable} 
+        ADD COLUMN ${DatabaseConstants.columnVerifiedDate} TEXT
+      ''');
+      
+      await db.execute('''
+        ALTER TABLE ${DatabaseConstants.assetsTable} 
+        ADD COLUMN ${DatabaseConstants.columnVerificationStatus} TEXT DEFAULT 'pending'
+      ''');
+      
+      // Create index for verification status
+      await db.execute('''
+        CREATE INDEX idx_verification_status ON ${DatabaseConstants.assetsTable}(${DatabaseConstants.columnVerificationStatus})
+      ''');
+    }
   }
 
   // ==================== CRUD Operations ====================

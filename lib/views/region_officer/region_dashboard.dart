@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../auth/login_screen.dart';
+import 'region_scan_screen.dart';
+import 'region_asset_entry_screen.dart';
 
 /// Region Officer Dashboard - Main screen for regional oversight
 class RegionDashboard extends ConsumerStatefulWidget {
@@ -94,6 +96,12 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
             ],
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToScan,
+        backgroundColor: const Color(0xFF0C3B2E),
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text('Scan'),
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
@@ -195,19 +203,19 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
       children: [
         _buildStatCard(
           'Total Assets',
-          stats.total.toString(),
+          stats.totalItems.toString(),
           Icons.inventory_2,
           Colors.blue,
         ),
         _buildStatCard(
           'Verified',
-          stats.verified.toString(),
+          stats.surveyedItems.toString(),
           Icons.check_circle,
           Colors.green,
         ),
         _buildStatCard(
           'Pending',
-          stats.pending.toString(),
+          stats.pendingItems.toString(),
           Icons.pending,
           Colors.orange,
         ),
@@ -255,11 +263,11 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
 
   Widget _buildStatusBreakdown(stats) {
     final statusItems = [
-      _StatusItem('Good', stats.good, Colors.green),
-      _StatusItem('Broken', stats.broken, Colors.red),
-      _StatusItem('Repairable', stats.repairable, Colors.orange),
-      _StatusItem('Missing', stats.missing, Colors.purple),
-      _StatusItem('Disposed', stats.disposed, Colors.grey),
+      _StatusItem('Good', stats.goodCount, Colors.green),
+      _StatusItem('Broken', stats.brokenCount, Colors.red),
+      _StatusItem('Repairable', stats.repairableCount, Colors.orange),
+      _StatusItem('To be Disposed', stats.toBeDisposedCount, Colors.purple),
+      _StatusItem('New Found', stats.newFoundCount, Colors.grey),
     ];
 
     return Card(
@@ -342,52 +350,53 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Color(0xFF0C3B2E),
-                child: Icon(Icons.bar_chart, color: Colors.white),
+                child: Icon(Icons.qr_code_scanner, color: Colors.white),
               ),
-              title: const Text('View Reports'),
-              subtitle: const Text('Access detailed survey reports'),
+              title: const Text('Scan Barcode'),
+              subtitle: const Text('Scan to enter/update asset data'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Reports feature coming soon')),
-                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RegionScanScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
               },
             ),
             const Divider(),
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Color(0xFF0C3B2E),
-                child: Icon(Icons.people, color: Colors.white),
+                child: Icon(Icons.add_box, color: Colors.white),
               ),
-              title: const Text('Field Officer Status'),
-              subtitle: const Text('Monitor field officer activities'),
+              title: const Text('Add New Asset'),
+              subtitle: const Text('Manually add new asset without scanning'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Field officer tracking coming soon')),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFF0C3B2E),
-                child: Icon(Icons.analytics, color: Colors.white),
-              ),
-              title: const Text('Analytics'),
-              subtitle: const Text('View regional performance metrics'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Analytics feature coming soon')),
-                );
+              onTap: () async {
+                final timestamp = DateTime.now().millisecondsSinceEpoch;
+                final newCode = 'MANUAL-$timestamp';
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RegionAssetEntryScreen(
+                      scannedCode: newCode,
+                    ),
+                  ),
+                ).then((_) => _handleRefresh());
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _navigateToScan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const RegionScanScreen()),
+    ).then((_) => _handleRefresh());
   }
 }
 

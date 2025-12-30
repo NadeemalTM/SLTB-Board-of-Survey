@@ -2,7 +2,7 @@
 class DatabaseConstants {
   // Database configuration
   static const String databaseName = 'sltb_survey.db';
-  static const int databaseVersion = 1;
+  static const int databaseVersion = 2; // Incremented for schema changes
 
   // Table names
   static const String assetsTable = 'assets';
@@ -22,6 +22,14 @@ class DatabaseConstants {
   static const String columnImagePath1 = 'image_path_1';
   static const String columnImagePath2 = 'image_path_2';
   static const String columnImagePath3 = 'image_path_3';
+  
+  // New workflow tracking columns
+  static const String columnEnteredBy = 'entered_by';
+  static const String columnEnteredDate = 'entered_date';
+  static const String columnVerifiedBy = 'verified_by';
+  static const String columnVerifiedDate = 'verified_date';
+  static const String columnVerificationStatus = 'verification_status';
+  
   static const String columnLastUpdatedBy = 'last_updated_by';
   static const String columnLastUpdatedDate = 'last_updated_date';
   static const String columnIsNewItem = 'is_new_item';

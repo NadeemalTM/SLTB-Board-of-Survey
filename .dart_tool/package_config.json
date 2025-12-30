@@ -195,11 +195,7 @@
     },
     {
       "name": "file_picker",
-<<<<<<< HEAD
       "rootUri": "file:///C:/Users/Asus/AppData/Local/Pub/Cache/hosted/pub.dev/file_picker-8.3.7",
-=======
-      "rootUri": "file:///C:/Users/Nadeemal%20Tech/AppData/Local/Pub/Cache/hosted/pub.dev/file_picker-8.3.7",
->>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },

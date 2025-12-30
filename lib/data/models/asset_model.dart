@@ -48,13 +48,28 @@ class AssetModel {
   /// Local file path to third image
   final String? imagePath3;
 
-  /// Username of the field officer who last updated this record
+  /// Username of the regional officer who entered the initial data
+  final String? enteredBy;
+
+  /// ISO8601 timestamp of initial data entry by regional officer
+  final String? enteredDate;
+
+  /// Username of the field officer who verified/confirmed this record
+  final String? verifiedBy;
+
+  /// ISO8601 timestamp of verification by field officer
+  final String? verifiedDate;
+
+  /// Verification status: 'pending', 'verified', 'needs_correction'
+  final String? verificationStatus;
+
+  /// Username of the officer who last updated this record
   final String? lastUpdatedBy;
 
   /// ISO8601 timestamp of last update
   final String? lastUpdatedDate;
 
-  /// Flag: 0 = existing item from master, 1 = new item added by field officer
+  /// Flag: 0 = existing item from master, 1 = new item added during survey
   final int isNewItem;
 
   AssetModel({
@@ -72,6 +87,11 @@ class AssetModel {
     this.imagePath1,
     this.imagePath2,
     this.imagePath3,
+    this.enteredBy,
+    this.enteredDate,
+    this.verifiedBy,
+    this.verifiedDate,
+    this.verificationStatus = 'pending',
     this.lastUpdatedBy,
     this.lastUpdatedDate,
     this.isNewItem = 0,
@@ -96,6 +116,11 @@ class AssetModel {
       imagePath1: map['image_path_1'] as String?,
       imagePath2: map['image_path_2'] as String?,
       imagePath3: map['image_path_3'] as String?,
+      enteredBy: map['entered_by'] as String?,
+      enteredDate: map['entered_date'] as String?,
+      verifiedBy: map['verified_by'] as String?,
+      verifiedDate: map['verified_date'] as String?,
+      verificationStatus: map['verification_status'] as String? ?? 'pending',
       lastUpdatedBy: map['last_updated_by'] as String?,
       lastUpdatedDate: map['last_updated_date'] as String?,
       isNewItem: map['is_new_item'] as int? ?? 0,
@@ -133,6 +158,11 @@ class AssetModel {
       'image_path_1': imagePath1,
       'image_path_2': imagePath2,
       'image_path_3': imagePath3,
+      'entered_by': enteredBy,
+      'entered_date': enteredDate,
+      'verified_by': verifiedBy,
+      'verified_date': verifiedDate,
+      'verification_status': verificationStatus,
       'last_updated_by': lastUpdatedBy,
       'last_updated_date': lastUpdatedDate,
       'is_new_item': isNewItem,
@@ -179,6 +209,11 @@ class AssetModel {
     String? imagePath1,
     String? imagePath2,
     String? imagePath3,
+    String? enteredBy,
+    String? enteredDate,
+    String? verifiedBy,
+    String? verifiedDate,
+    String? verificationStatus,
     String? lastUpdatedBy,
     String? lastUpdatedDate,
     int? isNewItem,
@@ -198,6 +233,11 @@ class AssetModel {
       imagePath1: imagePath1 ?? this.imagePath1,
       imagePath2: imagePath2 ?? this.imagePath2,
       imagePath3: imagePath3 ?? this.imagePath3,
+      enteredBy: enteredBy ?? this.enteredBy,
+      enteredDate: enteredDate ?? this.enteredDate,
+      verifiedBy: verifiedBy ?? this.verifiedBy,
+      verifiedDate: verifiedDate ?? this.verifiedDate,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
       lastUpdatedDate: lastUpdatedDate ?? this.lastUpdatedDate,
       isNewItem: isNewItem ?? this.isNewItem,
@@ -213,7 +253,17 @@ class AssetModel {
     };
   }
 
-  /// Check if asset has been surveyed (updated by field officer)
+  /// Check if asset data has been entered (by regional officer)
+  bool get isDataEntered {
+    return enteredBy != null && enteredBy!.isNotEmpty;
+  }
+
+  /// Check if asset has been verified (by field officer)
+  bool get isVerified {
+    return verifiedBy != null && verifiedBy!.isNotEmpty;
+  }
+
+  /// Check if asset has been surveyed (legacy - replaced by isDataEntered)
   bool get isSurveyed {
     return lastUpdatedBy != null && lastUpdatedBy!.isNotEmpty;
   }

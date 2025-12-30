@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../data/database/database_helper.dart';
-import 'field_verification_screen.dart';
+import 'region_asset_entry_screen.dart';
 
-/// Barcode Scanner Screen - Scan equipment barcodes for verification
-class ScanScreen extends StatefulWidget {
-  const ScanScreen({Key? key}) : super(key: key);
+/// Barcode Scanner Screen for Regional Officers
+/// Regional officers scan barcodes to enter/update asset data
+class RegionScanScreen extends StatefulWidget {
+  const RegionScanScreen({Key? key}) : super(key: key);
 
   @override
-  State<ScanScreen> createState() => _ScanScreenState();
+  State<RegionScanScreen> createState() => _RegionScanScreenState();
 }
 
-class _ScanScreenState extends State<ScanScreen> {
+class _RegionScanScreenState extends State<RegionScanScreen> {
   MobileScannerController cameraController = MobileScannerController();
   bool _isProcessing = false;
 
@@ -33,33 +34,34 @@ class _ScanScreenState extends State<ScanScreen> {
       final db = DatabaseHelper.instance;
       final asset = await db.getAssetByNewCode(code);
 
-      if (asset != null && mounted) {
-        // Navigate to verification screen
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => FieldOfficerVerificationScreen(asset: asset),
-          ),
-        );
+      if (mounted) {
+        if (asset != null) {
+          // Asset found - navigate to edit screen
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RegionAssetEntryScreen(
+                asset: asset,
+                scannedCode: code,
+              ),
+            ),
+          );
+        } else {
+          // Asset not found - create new entry
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RegionAssetEntryScreen(
+                scannedCode: code,
+              ),
+            ),
+          );
+        }
 
-        // Return to dashboard after verification
+        // Return to dashboard after update
         if (mounted) {
           Navigator.pop(context);
         }
-      } else if (mounted) {
-        // Asset not found - regional officer needs to enter it first
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Asset not found: $code\nRegional officer must enter this asset first.'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
@@ -71,9 +73,11 @@ class _ScanScreenState extends State<ScanScreen> {
         );
       }
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
@@ -81,7 +85,7 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Barcode'),
+        title: const Text('Scan Asset Barcode'),
         actions: [
           IconButton(
             icon: ValueListenableBuilder(
@@ -99,12 +103,7 @@ class _ScanScreenState extends State<ScanScreen> {
             tooltip: 'Toggle Flash',
           ),
           IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: cameraController.cameraFacingState,
-              builder: (context, state, child) {
-                return const Icon(Icons.flip_camera_ios);
-              },
-            ),
+            icon: const Icon(Icons.flip_camera_ios),
             onPressed: () => cameraController.switchCamera(),
             tooltip: 'Switch Camera',
           ),
@@ -149,7 +148,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
-                  'Scan barcode to verify asset details',
+                  'Scan barcode to enter asset details',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -210,7 +209,7 @@ class ScannerOverlayPainter extends CustomPainter {
 
     // Draw scan frame corners
     final Paint cornerPaint = Paint()
-      ..color = Colors.blue
+      ..color = const Color(0xFF0C3B2E)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
 

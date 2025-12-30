@@ -72,10 +72,9 @@ class DashboardState {
 
 /// Dashboard notifier
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  final DatabaseHelper _db;
-  final Ref _ref;
-
-  DashboardNotifier(this._db, this._ref) : super(const DashboardState());
+  final DatabaseHelper _db = DatabaseHelper.instance;
+  
+  DashboardNotifier() : super(const DashboardState());
 
   /// Load dashboard statistics
   Future<void> loadStats() async {
@@ -125,5 +124,5 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
 /// Dashboard provider
 final dashboardProvider =
     StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  return DashboardNotifier(DatabaseHelper(), ref);
+  return DashboardNotifier();
 });

@@ -63,7 +63,6 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   }
 
   Future<String> _generateNewCode() async {
-    final db = DatabaseHelper.instance;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return 'NEW-$timestamp';
   }

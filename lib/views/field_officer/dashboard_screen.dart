@@ -443,27 +443,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         padding: const EdgeInsets.only(bottom: 8),
         child: const ThemeToggleButton(),
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: _navigateToAddItem,
-            heroTag: 'addItem',
-            label: const Text('Add Item'),
-            icon: const Icon(Icons.add),
-            backgroundColor: const Color(0xFFbb8a52),
-            foregroundColor: Colors.white,
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            onPressed: _navigateToScan,
-            heroTag: 'scan',
-            label: const Text('Scan'),
-            icon: const Icon(Icons.qr_code_scanner),
-            backgroundColor: const Color(0xFF0C3B2E),
-            foregroundColor: Colors.white,
-          ),
-        ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToScan,
+        label: const Text('Scan to Verify'),
+        icon: const Icon(Icons.qr_code_scanner),
+        backgroundColor: const Color(0xFF0C3B2E),
+        foregroundColor: Colors.white,
       ),
     );
   }

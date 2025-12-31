@@ -443,12 +443,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         padding: const EdgeInsets.only(bottom: 8),
         child: const ThemeToggleButton(),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToScan,
-        label: const Text('Scan to Verify'),
-        icon: const Icon(Icons.qr_code_scanner),
-        backgroundColor: const Color(0xFF0C3B2E),
-        foregroundColor: Colors.white,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: _navigateToAddItem,
+            heroTag: 'addItem',
+            label: const Text('Add Item'),
+            icon: const Icon(Icons.add),
+<<<<<<< HEAD
+            backgroundColor: const Color(0xFFbb8a52),
+=======
+            backgroundColor: const Color(0xFFFFD700),
+            foregroundColor: Colors.black,
+>>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            onPressed: _navigateToScan,
+            heroTag: 'scan',
+            label: const Text('Scan'),
+            icon: const Icon(Icons.qr_code_scanner),
+<<<<<<< HEAD
+            backgroundColor: const Color(0xFF0C3B2E),
+=======
+            backgroundColor: const Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
+>>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
+          ),
+        ],
       ),
     );
   }
@@ -484,7 +507,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   title: 'Pending',
                   value: stats.pendingItems.toString(),
                   icon: Icons.pending,
+<<<<<<< HEAD
                   color: const Color(0xFFbb8a52),
+=======
+                  color: const Color(0xFFFFD700),
+>>>>>>> 67f0995eef7a2f2683a4faa36aa8872785e037d4
                 ),
               ),
             ],

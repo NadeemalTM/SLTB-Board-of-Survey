@@ -343,6 +343,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 'officer01 - officer10 / field123',
                                 Icons.person,
                               ),
+                              const SizedBox(height: 8),
+                              _buildAccountInfo(
+                                'Regional Officer',
+                                'regoff - 123',
+                                Icons.location_city,
+                              ),
                             ],
                           ),
                         ),

@@ -57,8 +57,8 @@ class ThemeToggleButton extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(14),
                     gradient: LinearGradient(
                       colors: isDark
-                          ? [const Color(0xFF1B5E20), const Color(0xFF2E7D32)]
-                          : [const Color(0xFF66BB6A), const Color(0xFF2E7D32)],
+                          ? [const Color.fromARGB(255, 255, 255, 255), const Color.fromARGB(255, 0, 0, 0)]
+                          : [const Color.fromARGB(255, 0, 0, 0), const Color.fromARGB(255, 255, 255, 255)],
                     ),
                   ),
                   child: Stack(
@@ -72,7 +72,7 @@ class ThemeToggleButton extends ConsumerWidget {
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700),
+                            color: const Color.fromARGB(255, 144, 124, 14),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(

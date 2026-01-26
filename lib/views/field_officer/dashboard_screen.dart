@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/asset_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/theme_toggle_button.dart';
 import '../../widgets/statistic_overview_card.dart';
 import '../../widgets/quick_actions_bar.dart';
 import '../../widgets/enhanced_search_bar.dart';
@@ -439,10 +438,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: const ThemeToggleButton(),
-      ),
+      // Theme toggle removed; keeping layout clean without bottom bar
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -505,4 +505,30 @@ class DatabaseHelper {
       throw Exception('Failed to delete database: $e');
     }
   }
+  // --- ADD THESE FUNCTIONS TO database_helper.dart ---
+
+  // 1. Get assets that have changed but haven't been uploaded
+  Future<List<AssetModel>> getUnsyncedAssets() async {
+    final db = await database;
+    // We assume 'is_synced' is 0 for items that need uploading
+    // OR simply get all items where physical_balance > 0 if you don't use is_synced column yet
+    final List<Map<String, dynamic>> maps = await db.query(
+      'assets', 
+      where: 'is_synced = ?', 
+      whereArgs: [0]
+    );
+    return List.generate(maps.length, (i) => AssetModel.fromMap(maps[i]));
+  }
+
+  // 2. Mark items as uploaded (synced)
+  Future<void> markAsSynced() async {
+    final db = await database;
+    await db.update(
+      'assets',
+      {'is_synced': 1},
+      where: 'is_synced = ?',
+      whereArgs: [0],
+    );
+  }
+
 }

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
-import '../../widgets/theme_toggle_button.dart';
 import '../auth/login_screen.dart';
 import 'import_master_screen.dart';
 import 'export_report_screen.dart';
 import 'merge_field_data_screen.dart';
+import 'sync_screen.dart';
 
 /// Admin Dashboard - Main screen for administrator
 class AdminDashboard extends ConsumerStatefulWidget {
@@ -66,6 +66,18 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_sync), // Different icon to distinguish
+            tooltip: 'Sync Data',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SyncScreen()),
+              );
+              _handleRefresh();
+            },
+          ),
+          // ------------------------
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _handleRefresh,
@@ -178,6 +190,24 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // --- FIXED SYNC CARD ---
+              _buildActionCard(
+                icon: Icons.sync,
+                title: 'Sync Data',
+                subtitle: 'Download from Server & Upload Changes',
+                color: Colors.blue,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SyncScreen(),
+                    ),
+                  ).then((_) => _handleRefresh()); // Refresh stats after syncing
+                },
+              ),
+              // -----------------------
+
               _buildActionCard(
                 icon: Icons.upload_file,
                 title: 'Import Master Data',
@@ -222,8 +252,6 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
-              const ThemeToggleButton(),
               const SizedBox(height: 16),
             ],
           ),

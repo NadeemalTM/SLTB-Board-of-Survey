@@ -13,9 +13,11 @@
         "flutter",
         "flutter_riverpod",
         "flutter_slidable",
+        "http",
         "image_picker",
         "intl",
         "mobile_scanner",
+        "mysql1",
         "path",
         "path_provider",
         "permission_handler",
@@ -252,6 +254,26 @@
       ]
     },
     {
+      "name": "mysql1",
+      "version": "0.20.0",
+      "dependencies": [
+        "collection",
+        "crypto",
+        "logging",
+        "pool"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "1.6.0",
+      "dependencies": [
+        "async",
+        "http_parser",
+        "meta",
+        "web"
+      ]
+    },
+    {
       "name": "flutter",
       "version": "0.0.0",
       "dependencies": [
@@ -441,16 +463,6 @@
       "version": "3.2.2",
       "dependencies": [
         "async"
-      ]
-    },
-    {
-      "name": "http",
-      "version": "1.6.0",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta",
-        "web"
       ]
     },
     {
@@ -992,6 +1004,16 @@
       ]
     },
     {
+      "name": "http_parser",
+      "version": "4.1.2",
+      "dependencies": [
+        "collection",
+        "source_span",
+        "string_scanner",
+        "typed_data"
+      ]
+    },
+    {
       "name": "sky_engine",
       "version": "0.0.0",
       "dependencies": []
@@ -1047,16 +1069,6 @@
       "version": "1.0.1",
       "dependencies": [
         "web"
-      ]
-    },
-    {
-      "name": "http_parser",
-      "version": "4.1.2",
-      "dependencies": [
-        "collection",
-        "source_span",
-        "string_scanner",
-        "typed_data"
       ]
     },
     {

@@ -6,6 +6,7 @@ import '../../data/models/asset_model.dart';
 import '../../data/database/database_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/survey_status.dart';
+import '../../services/http_sync_service.dart';
 
 /// Regional Officer Asset Entry Screen
 /// Used to enter complete asset details including physical count, status, photos
@@ -174,7 +175,7 @@ class _RegionAssetEntryScreenState
         );
       }
 
-      // Save to database
+      // Save to local database
       final db = DatabaseHelper.instance;
       if (widget.asset != null) {
         await db.updateAsset(assetToSave);
@@ -182,13 +183,16 @@ class _RegionAssetEntryScreenState
         await db.insertAsset(assetToSave);
       }
 
+      // Sync to MySQL via PHP API
+      bool synced = await HttpSyncService().saveAsset(assetToSave);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.asset != null
-                ? 'Asset updated successfully'
-                : 'Asset created successfully'),
-            backgroundColor: Colors.green,
+                ? 'Asset updated${synced ? ' & synced to MySQL' : ' (local only)'}'
+                : 'Asset saved${synced ? ' & synced to MySQL' : ' (local only)'}'),
+            backgroundColor: synced ? Colors.green : Colors.orange,
           ),
         );
         Navigator.pop(context, true);

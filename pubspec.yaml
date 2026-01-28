@@ -9,6 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # HTTP client for API calls
+  http: ^1.2.0
+
+  # MySQL Direct Connection
+  mysql1: ^0.20.0
 
   # State Management
   flutter_riverpod: ^2.4.9

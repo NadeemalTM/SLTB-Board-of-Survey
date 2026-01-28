@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
 import '../../data/database/database_helper.dart';
 import 'field_verification_screen.dart';
 
@@ -14,6 +16,29 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   MobileScannerController cameraController = MobileScannerController();
   bool _isProcessing = false;
+  bool _hasPermission = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _ensurePermission();
+  }
+
+  Future<void> _ensurePermission() async {
+    if (kIsWeb) return; // Browser will prompt; handled by MobileScanner
+    final status = await Permission.camera.status;
+    if (!status.isGranted) {
+      final result = await Permission.camera.request();
+      setState(() => _hasPermission = result.isGranted);
+      if (!result.isGranted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera permission is required to scan barcodes.'),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -50,7 +75,8 @@ class _ScanScreenState extends State<ScanScreen> {
         // Asset not found - regional officer needs to enter it first
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Asset not found: $code\nRegional officer must enter this asset first.'),
+            content: Text(
+                'Asset not found: $code\nRegional officer must enter this asset first.'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
@@ -110,78 +136,94 @@ class _ScanScreenState extends State<ScanScreen> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Camera View
-          MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty && !_isProcessing) {
-                final code = barcodes.first.rawValue;
-                if (code != null && code.isNotEmpty) {
-                  _handleBarcode(code);
-                }
-              }
-            },
-          ),
-
-          // Scan Overlay
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ScannerOverlayPainter(),
-            ),
-          ),
-
-          // Instructions
-          Positioned(
-            top: 24,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Text(
-                  'Scan barcode to verify asset details',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+      body: !_hasPermission
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Camera permission not granted'),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await openAppSettings();
+                    },
+                    child: const Text('Open Settings'),
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                ],
               ),
-            ),
-          ),
+            )
+          : Stack(
+              children: [
+                // Camera View
+                MobileScanner(
+                  controller: cameraController,
+                  onDetect: (capture) {
+                    final List<Barcode> barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty && !_isProcessing) {
+                      final code = barcodes.first.rawValue;
+                      if (code != null && code.isNotEmpty) {
+                        _handleBarcode(code);
+                      }
+                    }
+                  },
+                ),
 
-          // Processing Indicator
-          if (_isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Loading asset...'),
-                      ],
+                // Scan Overlay
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: ScannerOverlayPainter(),
+                  ),
+                ),
+
+                // Instructions
+                Positioned(
+                  top: 24,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Text(
+                        'Scan barcode to verify asset details',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
-              ),
+
+                // Processing Indicator
+                if (_isProcessing)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: const Center(
+                      child: Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Loading asset...'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

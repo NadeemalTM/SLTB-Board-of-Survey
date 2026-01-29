@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../data/models/asset_model.dart';
-import '../../data/database/database_helper.dart';
-import '../../providers/auth_provider.dart';
+// import '../../data/models/asset_model.dart'; // Not needed for Firebase direct write
+// import '../../data/database/database_helper.dart'; // REMOVED
+import '../../services/firestore_service.dart'; // ADDED
 import '../../core/constants/survey_status.dart';
 
-/// Add Item Screen - Add new assets found during survey
 class AddItemScreen extends ConsumerStatefulWidget {
-  const AddItemScreen({Key? key}) : super(key: key);
+  final String? scannedCode; // Added to accept code from scanner
+
+  const AddItemScreen({Key? key, this.scannedCode}) : super(key: key);
 
   @override
   ConsumerState<AddItemScreen> createState() => _AddItemScreenState();
@@ -17,126 +18,103 @@ class AddItemScreen extends ConsumerStatefulWidget {
 
 class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   final _formKey = GlobalKey<FormState>();
+  
+  // Controllers
+  late TextEditingController _codeController;
   final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController(); // ADDED
   final _physicalBalanceController = TextEditingController(text: '1');
   final _remarksController = TextEditingController();
   
   String _selectedStatus = SurveyStatus.good;
+  
+  // Images (UI Only for now - uploading requires Firebase Storage)
   String? _image1Path;
   String? _image2Path;
   String? _image3Path;
+  final ImagePicker _picker = ImagePicker();
   
   bool _isSaving = false;
-  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    // If a code was scanned, use it. Otherwise, generate a "NEW" code.
+    String initialCode = widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
+    _codeController = TextEditingController(text: initialCode);
+  }
 
   @override
   void dispose() {
+    _codeController.dispose();
     _descriptionController.dispose();
+    _locationController.dispose();
     _physicalBalanceController.dispose();
     _remarksController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage(int imageNumber) async {
+    // This part works for UI, but won't upload to cloud yet
     final XFile? image = await _picker.pickImage(
       source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1080,
-      imageQuality: 85,
+      imageQuality: 50, // Reduced quality for faster processing
     );
 
     if (image != null) {
       setState(() {
         switch (imageNumber) {
-          case 1:
-            _image1Path = image.path;
-            break;
-          case 2:
-            _image2Path = image.path;
-            break;
-          case 3:
-            _image3Path = image.path;
-            break;
+          case 1: _image1Path = image.path; break;
+          case 2: _image2Path = image.path; break;
+          case 3: _image3Path = image.path; break;
         }
       });
     }
   }
 
-  Future<String> _generateNewCode() async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return 'NEW-$timestamp';
-  }
-
   Future<void> _saveNewAsset() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
-      final authState = ref.read(authProvider);
-      final username = authState.currentUser?.username ?? 'unknown';
-      final physicalBalance = int.parse(_physicalBalanceController.text);
+      // --- NEW FIREBASE LOGIC ---
+      final firestore = FirestoreService();
       
-      // Generate unique new code
-      final newCode = await _generateNewCode();
-
-      // Create new asset
-      final newAsset = AssetModel(
-        serialNo: null, // New items don't have serial numbers yet
-        description: _descriptionController.text.trim(),
-        oldCode: 'N/A',
-        newCode: newCode,
-        bookBalance: 0, // New items have no book balance
-        physicalBalance: physicalBalance,
-        excess: physicalBalance, // All quantity is excess
-        shortage: 0,
-        remarks: _remarksController.text.trim(),
-        surveyStatus: _selectedStatus,
-        imagePath1: _image1Path,
-        imagePath2: _image2Path,
-        imagePath3: _image3Path,
-        lastUpdatedBy: username,
-        lastUpdatedDate: DateTime.now().toIso8601String(),
-        isNewItem: 1, // Mark as new item
+      await firestore.addAsset(
+        _codeController.text,
+        _descriptionController.text,
+        int.parse(_physicalBalanceController.text),
+        _locationController.text,
       );
 
-      // Save to database
-      final db = DatabaseHelper.instance;
-      await db.insertAsset(newAsset);
+      // Note: We are currently ignoring 'SurveyStatus' and 'Remarks' 
+      // in the simple addAsset function. 
+      // You can update FirestoreService later to accept these extra fields.
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('New item added successfully'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Asset Saved to Cloud!'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context, true); // Return true to indicate addition
+        // Return to Dashboard (Pop twice: Close Add Screen, Close Scan Screen)
+        Navigator.pop(context); 
+        Navigator.pop(context); 
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      setState(() {
-        _isSaving = false;
-      });
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add New Item'),
-      ),
+      appBar: AppBar(title: const Text('Add New Item')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -144,164 +122,90 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Info Card
-              Card(
-                color: const Color(0xFF2A2A2A),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info, color: Colors.white70),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Use this form to add assets found during survey that are not in the master list',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
+              // 1. Barcode Field (Read Only)
+              TextFormField(
+                controller: _codeController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Barcode / Asset ID',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.black12,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Description
+              // 2. Description
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
                   labelText: 'Description *',
-                  hintText: 'Enter item description',
+                  hintText: 'Ex: Dell Monitor 24"',
                   prefixIcon: Icon(Icons.description),
+                  border: OutlineInputBorder(),
                 ),
-                maxLines: 2,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter description';
-                  }
-                  return null;
-                },
+                validator: (val) => val!.isEmpty ? 'Enter description' : null,
               ),
               const SizedBox(height: 16),
 
-              // Physical Balance
+              // 3. Location (CRITICAL FOR DATABASE)
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Location *',
+                  hintText: 'Ex: Room 203',
+                  prefixIcon: Icon(Icons.location_on),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (val) => val!.isEmpty ? 'Enter location' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // 4. Quantity
               TextFormField(
                 controller: _physicalBalanceController,
+                keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'Quantity *',
-                  hintText: 'Enter quantity found',
                   prefixIcon: Icon(Icons.inventory),
+                  border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter quantity';
-                  }
-                  final qty = int.tryParse(value);
-                  if (qty == null || qty < 1) {
-                    return 'Please enter a valid quantity (minimum 1)';
-                  }
-                  return null;
-                },
+                validator: (val) => val!.isEmpty ? 'Enter quantity' : null,
               ),
               const SizedBox(height: 16),
 
-              // Survey Status
+              // 5. Condition
               DropdownButtonFormField<String>(
                 value: _selectedStatus,
                 decoration: const InputDecoration(
                   labelText: 'Condition',
+                  border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.assignment_turned_in),
                 ),
                 items: [
                   SurveyStatus.good,
                   SurveyStatus.broken,
                   SurveyStatus.missing,
-                ].map((status) {
-                  return DropdownMenuItem(
-                    value: status,
-                    child: Row(
-                      children: [
-                        Icon(
-                          _getStatusIcon(status),
-                          size: 20,
-                          color: _getStatusColor(status),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(status.toUpperCase()),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedStatus = value;
-                    });
-                  }
-                },
+                ].map((status) => DropdownMenuItem(
+                  value: status,
+                  child: Text(status.toUpperCase()),
+                )).toList(),
+                onChanged: (val) => setState(() => _selectedStatus = val!),
               ),
-              const SizedBox(height: 16),
-
-              // Remarks
-              TextFormField(
-                controller: _remarksController,
-                decoration: const InputDecoration(
-                  labelText: 'Remarks',
-                  hintText: 'Add any notes or observations',
-                  prefixIcon: Icon(Icons.note),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-
-              // Photos Section
-              const Text(
-                'Photos (Optional)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildPhotoThumbnail(1, _image1Path),
-                  _buildPhotoThumbnail(2, _image2Path),
-                  _buildPhotoThumbnail(3, _image3Path),
-                ],
-              ),
+              
               const SizedBox(height: 24),
 
               // Save Button
               ElevatedButton.icon(
                 onPressed: _isSaving ? null : _saveNewAsset,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.add_circle),
-                label: Text(_isSaving ? 'Adding...' : 'Add New Item'),
+                icon: _isSaving 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white))
+                  : const Icon(Icons.cloud_upload),
+                label: Text(_isSaving ? 'Saving to Cloud...' : 'SAVE ASSET'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Colors.green[700],
                   foregroundColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Cancel Button
-              OutlinedButton(
-                onPressed: _isSaving ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
             ],
@@ -310,68 +214,4 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       ),
     );
   }
-
-  Widget _buildPhotoThumbnail(int number, String? imagePath) {
-    return GestureDetector(
-      onTap: () => _pickImage(number),
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF3A3A3A)),
-        ),
-        child: imagePath != null && imagePath.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(imagePath),
-                  fit: BoxFit.cover,
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo, color: Colors.grey[600]),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Photo $number',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case SurveyStatus.good:
-        return Icons.check_circle;
-      case SurveyStatus.broken:
-        return Icons.broken_image;
-      case SurveyStatus.missing:
-        return Icons.cancel;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case SurveyStatus.good:
-        return Colors.green;
-      case SurveyStatus.broken:
-        return Colors.orange;
-      case SurveyStatus.missing:
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 }
-

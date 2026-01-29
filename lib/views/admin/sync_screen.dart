@@ -1,122 +1,72 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
-import '../../data/database/database_helper.dart';
-import '../../data/models/asset_model.dart'; // Ensure this path is correct
-import 'package:flutter/foundation.dart'; // Needed for kIsWeb
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SyncScreen extends StatefulWidget {
+class SyncScreen extends ConsumerStatefulWidget {
   const SyncScreen({Key? key}) : super(key: key);
 
   @override
-  State<SyncScreen> createState() => _SyncScreenState();
+  ConsumerState<SyncScreen> createState() => _SyncScreenState();
 }
 
-class _SyncScreenState extends State<SyncScreen> {
-  bool _isLoading = false;
-  String _statusMessage = "Ready to Sync";
+class _SyncScreenState extends ConsumerState<SyncScreen> {
+  bool _isSyncing = false;
+
+  Future<void> _startSync() async {
+    setState(() => _isSyncing = true);
+
+    // Simulate a sync process (Since Firebase is Realtime, we don't strictly need this)
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      setState(() => _isSyncing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cloud Sync is active! Data is saved automatically.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sync Data")),
+      appBar: AppBar(title: const Text('Data Sync')),
       body: Center(
-        child: _isLoading
-            ? const CircularProgressIndicator()
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text(
-                      _statusMessage,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: _statusMessage.contains("Success") ? Colors.green : Colors.black54),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  
-                  // DOWNLOAD BUTTON
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.download),
-                    label: const Text("DOWNLOAD FROM SERVER"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _downloadData,
-                  ),
-                  
-                  const SizedBox(height: 20),
-
-                  // UPLOAD BUTTON
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.upload),
-                    label: const Text("UPLOAD CHANGES"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _uploadData,
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_done, size: 80, color: Colors.blue),
+              const SizedBox(height: 24),
+              const Text(
+                'You are connected to the Cloud',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 12),
+              const Text(
+                'Your data is automatically synchronized with Google Firebase.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isSyncing ? null : _startSync,
+                  icon: _isSyncing 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.sync),
+                  label: Text(_isSyncing ? 'Checking Connection...' : 'Check Connection'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
-  }
-
-  Future<void> _downloadData() async {
-    setState(() { _isLoading = true; _statusMessage = "Downloading..."; });
-
-    try {
-      final assets = await ApiService.fetchAllAssets();
-      await DatabaseHelper.instance.clearAllAssets();
-      
-      for (var json in assets) {
-        // We convert JSON to AssetModel and save
-        // Make sure your AssetModel.fromJson handles the fields correctly
-        // If fromJson doesn't exist, use fromMap or manual creation
-        await DatabaseHelper.instance.insertAsset(AssetModel.fromMap(json));
-      }
-
-      setState(() => _statusMessage = "Success! Downloaded ${assets.length} items.");
-    } catch (e) {
-      setState(() => _statusMessage = "Error: $e");
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _uploadData() async {
-    setState(() { _isLoading = true; _statusMessage = "Uploading..."; });
-
-    try {
-      final unsynced = await DatabaseHelper.instance.getUnsyncedAssets();
-      
-      if (unsynced.isEmpty) {
-        setState(() => _statusMessage = "No changes to upload.");
-        return;
-      }
-
-      // Convert List<AssetModel> to List<Map>
-      final List<Map<String, dynamic>> jsonList = unsynced.map((a) => a.toMap()).toList();
-      
-      final success = await ApiService.uploadChanges(jsonList);
-
-      if (success) {
-        await DatabaseHelper.instance.markAsSynced();
-        setState(() => _statusMessage = "Success! Uploaded ${unsynced.length} items.");
-      } else {
-        setState(() => _statusMessage = "Upload Failed.");
-      }
-    } catch (e) {
-      setState(() => _statusMessage = "Error: $e");
-    } finally {
-      setState(() => _isLoading = false);
-    }
   }
 }

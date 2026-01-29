@@ -1,131 +1,120 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // Needed for kIsWeb
-import '../data/models/asset_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../../services/firestore_service.dart'; // <--- USING FIREBASE NOW
+import '../../core/constants/survey_status.dart';
 
-class ApiService {
-  static String get baseUrl {
-    if (kIsWeb) {
-      // ---------------------------------------------------------
-      // FOR CHROME (WEB)
-      // Apache default port is 80 (no need to specify port)
-      // If using different port like 8080, change to: http://localhost:8080/api
-      // ---------------------------------------------------------
-      return "http://localhost/api"; 
-    } else {
-      // FOR ANDROID PHONE
-      // Use your computer's IP address where XAMPP is running
-      // Port 80 is default for Apache (don't need to specify)
-      return "http://172.20.10.3/api"; 
-    }
+class AddItemScreen extends ConsumerStatefulWidget {
+  final String? scannedCode; // Accepts code from scanner
+
+  const AddItemScreen({Key? key, this.scannedCode}) : super(key: key);
+
+  @override
+  ConsumerState<AddItemScreen> createState() => _AddItemScreenState();
+}
+
+class _AddItemScreenState extends ConsumerState<AddItemScreen> {
+  final _formKey = GlobalKey<FormState>();
+  
+  // Controllers
+  late TextEditingController _codeController;
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController(); 
+  final _physicalBalanceController = TextEditingController(text: '1');
+  final _remarksController = TextEditingController();
+  
+  String _selectedStatus = SurveyStatus.good;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use scanned code or generate a NEW one
+    String initialCode = widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
+    _codeController = TextEditingController(text: initialCode);
   }
 
-  static Future<List<dynamic>> fetchAllAssets() async {
-    try {
-      // For Web, we sometimes need to bypass browser caching
-      final uri = Uri.parse('$baseUrl/sync.php?t=${DateTime.now().millisecondsSinceEpoch}');
-      final response = await http.get(uri);
+  Future<void> _saveNewAsset() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Server Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Connection Failed: $e');
-    }
-  }
+    setState(() => _isSaving = true);
 
-  static Future<bool> uploadChanges(List<Map<String, dynamic>> offlineChanges) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/sync.php'),
-        body: jsonEncode({"updates": offlineChanges}), 
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          // These headers help prevent CORS errors on Web
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Access-Control-Allow-Origin, Accept",
-        },
+      // --- NEW FIREBASE LOGIC ---
+      // We are calling FirestoreService, NOT ApiService
+      final firestore = FirestoreService();
+      
+      await firestore.addAsset(
+        _codeController.text,
+        _descriptionController.text,
+        int.parse(_physicalBalanceController.text),
+        _locationController.text,
       );
 
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        return result['status'] == 'success';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Asset Saved to Cloud!'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context); // Close screen
+        Navigator.pop(context); // Close scanner (if open)
       }
-      return false;
     } catch (e) {
-      return false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  /// Save asset to MySQL database
-  /// Returns true if saved successfully, false otherwise
-  static Future<bool> saveAssetToMySql(AssetModel asset) async {
-    try {
-      // Extract just the filename from the image path (temporary solution)
-      String? image1Name = _extractFileName(asset.imagePath1);
-      String? image2Name = _extractFileName(asset.imagePath2);
-      String? image3Name = _extractFileName(asset.imagePath3);
-
-      final Map<String, dynamic> assetData = {
-        'serial_no': asset.serialNo,
-        'description': asset.description,
-        'old_code': asset.oldCode,
-        'new_code': asset.newCode,
-        'book_balance': asset.bookBalance,
-        'physical_balance': asset.physicalBalance,
-        'excess': asset.excess,
-        'shortage': asset.shortage,
-        'remarks': asset.remarks,
-        'survey_status': asset.surveyStatus,
-        'image_path_1': image1Name, // Store just the image filename
-        'image_path_2': image2Name,
-        'image_path_3': image3Name,
-        'entered_by': asset.enteredBy,
-        'entered_date': asset.enteredDate,
-        'verified_by': asset.verifiedBy,
-        'verified_date': asset.verifiedDate,
-        'verification_status': asset.verificationStatus,
-        'last_updated_by': asset.lastUpdatedBy,
-        'last_updated_date': asset.lastUpdatedDate,
-        'is_new_item': asset.isNewItem,
-      };
-
-      debugPrint('Sending to: $baseUrl/save_asset.php');
-      debugPrint('Data: ${jsonEncode(assetData)}');
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/save_asset.php'),
-        body: jsonEncode(assetData),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-      ).timeout(const Duration(seconds: 30));
-
-      debugPrint('Response status: ${response.statusCode}');
-      debugPrint('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        return result['status'] == 'success';
-      }
-      debugPrint('Failed with status code: ${response.statusCode}');
-      return false;
-    } catch (e) {
-      debugPrint('Error saving asset to MySQL: $e');
-      return false;
-    }
-  }
-
-  /// Extract filename from full path
-  /// e.g., "/data/user/0/com.example/cache/image_123.jpg" -> "image_123.jpg"
-  static String? _extractFileName(String? path) {
-    if (path == null || path.isEmpty) return null;
-    // Get the filename from the path
-    final parts = path.split('/');
-    return parts.isNotEmpty ? parts.last : null;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Add New Item (Cloud)')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _codeController,
+                readOnly: true,
+                decoration: const InputDecoration(labelText: 'Barcode', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                validator: (val) => val!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder()),
+                validator: (val) => val!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _physicalBalanceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isSaving ? null : _saveNewAsset,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.all(16)),
+                child: _isSaving 
+                  ? const CircularProgressIndicator(color: Colors.white) 
+                  : const Text("SAVE TO FIREBASE", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

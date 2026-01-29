@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-import '../../data/database/database_helper.dart';
 import 'field_verification_screen.dart';
+import '../../services/firestore_service.dart';
 
 /// Barcode Scanner Screen - Scan equipment barcodes for verification
 class ScanScreen extends StatefulWidget {
@@ -56,56 +56,41 @@ class _ScanScreenState extends State<ScanScreen> {
     });
 
     try {
-      // Check if running on web
-      if (kIsWeb) {
-        // On web, show message that database is not supported
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Database not supported on web. Please use the mobile app.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        setState(() {
-          _isProcessing = false;
-        });
-        return;
-      }
+      // 1. Initialize Firestore Service
+      final firestore = FirestoreService();
 
-      // Query database for asset with this code
-      final db = DatabaseHelper.instance;
-      final asset = await db.getAssetByNewCode(code);
+      // 2. Check if the asset exists in the Cloud
+      final doc = await firestore.getAsset(code);
 
-      if (asset != null && mounted) {
-        // Navigate to verification screen
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => FieldOfficerVerificationScreen(asset: asset),
-          ),
-        );
+      if (!mounted) return;
 
-        // Return to dashboard after verification
-        if (mounted) {
-          Navigator.pop(context);
-        }
-      } else if (mounted) {
-        // Asset not found - regional officer needs to enter it first
+      if (doc.exists) {
+        // --- CASE A: ITEM EXISTS ---
+        // The item is already in the database. 
+        // We will send the data to the Verification Screen.
+        
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Asset not found: $code\nRegional officer must enter this asset first.'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
+            SnackBar(content: Text('Item Found: ${data['description'] ?? "Unknown"}'), backgroundColor: Colors.green),
         );
+
+        // TODO: Navigate to Edit/Verification Screen (We will create this next)
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => EditAssetScreen(data: data, docId: code)));
+
+      } else {
+        // --- CASE B: NEW ITEM ---
+        // The item is NOT in the database.
+        // We navigate to the "Add New Asset" screen.
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('New Item Detected!'), backgroundColor: Colors.blue),
+        );
+
+        // TODO: Navigate to Add Screen (We will create this next)
+        // Navigator.push(context, MaterialPageRoute(builder: (_) => AddAssetScreen(code: code)));
       }
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

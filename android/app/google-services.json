@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "957610807159",
+    "project_id": "sltb-survey",
+    "storage_bucket": "sltb-survey.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957610807159:android:8c7003eeb871ce55a55b72",
+        "android_client_info": {
+          "package_name": "com.example.sltb_board_of_survey"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdFO_vEClNEzpo5sACywEaAdc2cPW1Mpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

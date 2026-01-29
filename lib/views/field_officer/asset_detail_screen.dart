@@ -41,7 +41,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
     _remarksController = TextEditingController(
       text: widget.asset.remarks ?? '',
     );
-    _selectedStatus = widget.asset.surveyStatus ?? SurveyStatus.pending;
+    _selectedStatus = SurveyStatus.migrateStatus(widget.asset.surveyStatus);
     _image1Path = widget.asset.imagePath1;
     _image2Path = widget.asset.imagePath2;
     _image3Path = widget.asset.imagePath3;
@@ -290,9 +290,8 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
                         prefixIcon: Icon(Icons.assignment_turned_in),
                       ),
                       items: [
-                        SurveyStatus.pending,
-                        SurveyStatus.verified,
-                        SurveyStatus.damaged,
+                        SurveyStatus.good,
+                        SurveyStatus.broken,
                         SurveyStatus.missing,
                       ].map((status) {
                         return DropdownMenuItem(
@@ -477,22 +476,22 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
 
   IconData _getStatusIcon(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Icons.check_circle;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Icons.broken_image;
       case SurveyStatus.missing:
         return Icons.cancel;
       default:
-        return Icons.pending;
+        return Icons.help_outline;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Colors.green;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Colors.orange;
       case SurveyStatus.missing:
         return Colors.red;

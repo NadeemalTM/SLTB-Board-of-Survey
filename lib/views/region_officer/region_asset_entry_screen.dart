@@ -34,7 +34,7 @@ class _RegionAssetEntryScreenState
   late TextEditingController _physicalBalanceController;
   late TextEditingController _remarksController;
 
-  String _selectedStatus = SurveyStatus.verified;
+  String _selectedStatus = SurveyStatus.good;
   String? _image1Path;
   String? _image2Path;
   String? _image3Path;
@@ -63,7 +63,7 @@ class _RegionAssetEntryScreenState
       text: asset?.remarks ?? '',
     );
 
-    _selectedStatus = asset?.surveyStatus ?? SurveyStatus.verified;
+    _selectedStatus = SurveyStatus.migrateStatus(asset?.surveyStatus);
     _image1Path = asset?.imagePath1;
     _image2Path = asset?.imagePath2;
     _image3Path = asset?.imagePath3;
@@ -254,7 +254,11 @@ class _RegionAssetEntryScreenState
             children: [
               // Info Card
               Card(
-                color: const Color(0xFF2A2A2A),
+                color: const Color.fromARGB(255, 255, 255, 255),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF2A2A2A)),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -273,7 +277,7 @@ class _RegionAssetEntryScreenState
                                   'Barcode',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: Colors.black,
                                   ),
                                 ),
                                 Text(
@@ -281,7 +285,7 @@ class _RegionAssetEntryScreenState
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0C3B2E),
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],
@@ -291,7 +295,7 @@ class _RegionAssetEntryScreenState
                       ),
                       if (isNewAsset) ...[
                         const SizedBox(height: 12),
-                        const Divider(),
+                        const Divider(color: Colors.grey),
                         const SizedBox(height: 8),
                         const Row(
                           children: [
@@ -300,7 +304,7 @@ class _RegionAssetEntryScreenState
                             Expanded(
                               child: Text(
                                 'New asset - Enter all details',
-                                style: TextStyle(fontSize: 13),
+                                style: TextStyle(fontSize: 13, color: Colors.black87),
                               ),
                             ),
                           ],
@@ -391,21 +395,22 @@ class _RegionAssetEntryScreenState
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
                 ),
                 child: Column(
                   children: [
                     _buildCalculationRow(
                       'Excess',
                       excess.toString(),
-                      excess > 0 ? Colors.green : Colors.grey,
+                      excess > 0 ? Colors.green : const Color.fromARGB(255, 0, 0, 0),
                     ),
                     const SizedBox(height: 8),
                     _buildCalculationRow(
                       'Shortage',
                       shortage.toString(),
-                      shortage > 0 ? Colors.red : Colors.grey,
+                      shortage > 0 ? Colors.red : const Color.fromARGB(255, 0, 0, 0),
                     ),
                   ],
                 ),
@@ -420,10 +425,9 @@ class _RegionAssetEntryScreenState
                   prefixIcon: Icon(Icons.assignment_turned_in),
                 ),
                 items: [
-                  SurveyStatus.verified,
-                  SurveyStatus.damaged,
+                  SurveyStatus.good,
+                  SurveyStatus.broken,
                   SurveyStatus.missing,
-                  SurveyStatus.pending,
                 ].map((status) {
                   return DropdownMenuItem(
                     value: status,
@@ -578,22 +582,22 @@ class _RegionAssetEntryScreenState
 
   IconData _getStatusIcon(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Icons.check_circle;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Icons.broken_image;
       case SurveyStatus.missing:
         return Icons.cancel;
       default:
-        return Icons.pending;
+        return Icons.help_outline;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Colors.green;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Colors.orange;
       case SurveyStatus.missing:
         return Colors.red;

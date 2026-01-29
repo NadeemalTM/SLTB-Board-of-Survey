@@ -17,6 +17,7 @@ class _ScanScreenState extends State<ScanScreen> {
   MobileScannerController cameraController = MobileScannerController();
   bool _isProcessing = false;
   bool _hasPermission = true;
+  final TextEditingController _manualCodeController = TextEditingController();
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   void dispose() {
     cameraController.dispose();
+    _manualCodeController.dispose();
     super.dispose();
   }
 
@@ -54,6 +56,23 @@ class _ScanScreenState extends State<ScanScreen> {
     });
 
     try {
+      // Check if running on web
+      if (kIsWeb) {
+        // On web, show message that database is not supported
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Database not supported on web. Please use the mobile app.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
       // Query database for asset with this code
       final db = DatabaseHelper.instance;
       final asset = await db.getAssetByNewCode(code);
@@ -97,10 +116,56 @@ class _ScanScreenState extends State<ScanScreen> {
         );
       }
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
+  }
+
+  void _showManualEntryDialog() {
+    _manualCodeController.clear();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Barcode Manually'),
+        content: TextField(
+          controller: _manualCodeController,
+          decoration: const InputDecoration(
+            labelText: 'Barcode Number',
+            hintText: 'Type the barcode number',
+            prefixIcon: Icon(Icons.qr_code),
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.characters,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final code = _manualCodeController.text.trim();
+              if (code.isNotEmpty) {
+                Navigator.pop(context);
+                _handleBarcode(code);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a barcode number'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -125,12 +190,7 @@ class _ScanScreenState extends State<ScanScreen> {
             tooltip: 'Toggle Flash',
           ),
           IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: cameraController.cameraFacingState,
-              builder: (context, state, child) {
-                return const Icon(Icons.flip_camera_ios);
-              },
-            ),
+            icon: const Icon(Icons.flip_camera_ios),
             onPressed: () => cameraController.switchCamera(),
             tooltip: 'Switch Camera',
           ),
@@ -154,7 +214,7 @@ class _ScanScreenState extends State<ScanScreen> {
             )
           : Stack(
               children: [
-                // Camera View
+                // Full Screen Camera View - No overlay, no box
                 MobileScanner(
                   controller: cameraController,
                   onDetect: (capture) {
@@ -168,18 +228,11 @@ class _ScanScreenState extends State<ScanScreen> {
                   },
                 ),
 
-                // Scan Overlay
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: ScannerOverlayPainter(),
-                  ),
-                ),
-
-                // Instructions
+                // Instructions at top
                 Positioned(
                   top: 24,
-                  left: 0,
-                  right: 0,
+                  left: 16,
+                  right: 16,
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -187,16 +240,39 @@ class _ScanScreenState extends State<ScanScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: const Text(
-                        'Scan barcode to verify asset details',
+                        'Point camera at barcode to scan',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                         ),
                         textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Manual Entry Button at bottom
+                Positioned(
+                  bottom: 40,
+                  left: 24,
+                  right: 24,
+                  child: ElevatedButton.icon(
+                    onPressed: _showManualEntryDialog,
+                    icon: const Icon(Icons.keyboard),
+                    label: const Text('Enter Barcode Manually'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0C3B2E),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -228,85 +304,3 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 }
 
-/// Scanner Overlay Painter - Draws scan frame
-class ScannerOverlayPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double scanAreaSize = size.width * 0.7;
-    final Rect scanRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2),
-      width: scanAreaSize,
-      height: scanAreaSize * 0.6,
-    );
-
-    // Draw dark overlay
-    final Path overlayPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRRect(RRect.fromRectAndRadius(scanRect, const Radius.circular(16)))
-      ..fillType = PathFillType.evenOdd;
-
-    canvas.drawPath(
-      overlayPath,
-      Paint()..color = Colors.black.withOpacity(0.5),
-    );
-
-    // Draw scan frame corners
-    final Paint cornerPaint = Paint()
-      ..color = Colors.blue
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke;
-
-    final double cornerLength = 30;
-
-    // Top-left corner
-    canvas.drawLine(
-      scanRect.topLeft,
-      scanRect.topLeft.translate(cornerLength, 0),
-      cornerPaint,
-    );
-    canvas.drawLine(
-      scanRect.topLeft,
-      scanRect.topLeft.translate(0, cornerLength),
-      cornerPaint,
-    );
-
-    // Top-right corner
-    canvas.drawLine(
-      scanRect.topRight,
-      scanRect.topRight.translate(-cornerLength, 0),
-      cornerPaint,
-    );
-    canvas.drawLine(
-      scanRect.topRight,
-      scanRect.topRight.translate(0, cornerLength),
-      cornerPaint,
-    );
-
-    // Bottom-left corner
-    canvas.drawLine(
-      scanRect.bottomLeft,
-      scanRect.bottomLeft.translate(cornerLength, 0),
-      cornerPaint,
-    );
-    canvas.drawLine(
-      scanRect.bottomLeft,
-      scanRect.bottomLeft.translate(0, -cornerLength),
-      cornerPaint,
-    );
-
-    // Bottom-right corner
-    canvas.drawLine(
-      scanRect.bottomRight,
-      scanRect.bottomRight.translate(-cornerLength, 0),
-      cornerPaint,
-    );
-    canvas.drawLine(
-      scanRect.bottomRight,
-      scanRect.bottomRight.translate(0, -cornerLength),
-      cornerPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

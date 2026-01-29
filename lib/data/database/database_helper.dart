@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +24,9 @@ class DatabaseHelper {
 
   /// Get database instance (create if not exists)
   Future<Database> get database async {
+    if (kIsWeb) {
+      throw Exception('Database is not supported on web. Please use the mobile app.');
+    }
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
@@ -30,6 +34,9 @@ class DatabaseHelper {
 
   /// Initialize database and create tables
   Future<Database> _initDatabase() async {
+    if (kIsWeb) {
+      throw Exception('Database is not supported on web. Please use the mobile app.');
+    }
     try {
       // Get application documents directory
       Directory documentsDirectory = await getApplicationDocumentsDirectory();

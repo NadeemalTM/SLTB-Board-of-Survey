@@ -56,7 +56,7 @@ class _FieldOfficerVerificationScreenState
     );
     _remarksController = TextEditingController(text: asset.remarks ?? '');
 
-    _selectedStatus = asset.surveyStatus ?? SurveyStatus.verified;
+    _selectedStatus = SurveyStatus.migrateStatus(asset.surveyStatus);
     _image1Path = asset.imagePath1;
     _image2Path = asset.imagePath2;
     _image3Path = asset.imagePath3;
@@ -211,7 +211,7 @@ class _FieldOfficerVerificationScreenState
                       widget.asset.physicalBalance.toString();
                   _remarksController.text = widget.asset.remarks ?? '';
                   _selectedStatus =
-                      widget.asset.surveyStatus ?? SurveyStatus.verified;
+                      SurveyStatus.migrateStatus(widget.asset.surveyStatus);
                 });
               },
               tooltip: 'Cancel Edit',
@@ -419,10 +419,9 @@ class _FieldOfficerVerificationScreenState
                   prefixIcon: Icon(Icons.assignment_turned_in),
                 ),
                 items: [
-                  SurveyStatus.verified,
-                  SurveyStatus.damaged,
+                  SurveyStatus.good,
+                  SurveyStatus.broken,
                   SurveyStatus.missing,
-                  SurveyStatus.pending,
                 ].map((status) {
                   return DropdownMenuItem(
                     value: status,
@@ -623,22 +622,22 @@ class _FieldOfficerVerificationScreenState
 
   IconData _getStatusIcon(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Icons.check_circle;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Icons.broken_image;
       case SurveyStatus.missing:
         return Icons.cancel;
       default:
-        return Icons.pending;
+        return Icons.help_outline;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Colors.green;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Colors.orange;
       case SurveyStatus.missing:
         return Colors.red;

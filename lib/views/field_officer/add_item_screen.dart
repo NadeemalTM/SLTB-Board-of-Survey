@@ -21,7 +21,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   final _physicalBalanceController = TextEditingController(text: '1');
   final _remarksController = TextEditingController();
   
-  String _selectedStatus = SurveyStatus.verified;
+  String _selectedStatus = SurveyStatus.good;
   String? _image1Path;
   String? _image2Path;
   String? _image3Path;
@@ -213,8 +213,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   prefixIcon: Icon(Icons.assignment_turned_in),
                 ),
                 items: [
-                  SurveyStatus.verified,
-                  SurveyStatus.damaged,
+                  SurveyStatus.good,
+                  SurveyStatus.broken,
+                  SurveyStatus.missing,
                 ].map((status) {
                   return DropdownMenuItem(
                     value: status,
@@ -349,21 +350,25 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
   IconData _getStatusIcon(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Icons.check_circle;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Icons.broken_image;
+      case SurveyStatus.missing:
+        return Icons.cancel;
       default:
-        return Icons.pending;
+        return Icons.help_outline;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case SurveyStatus.verified:
+      case SurveyStatus.good:
         return Colors.green;
-      case SurveyStatus.damaged:
+      case SurveyStatus.broken:
         return Colors.orange;
+      case SurveyStatus.missing:
+        return Colors.red;
       default:
         return Colors.grey;
     }

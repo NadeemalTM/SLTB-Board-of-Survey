@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart'; // 1. IMPORT THIS
 import 'views/auth/login_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async { // 2. CHANGE TO 'async'
+  // 3. ADD THESE TWO LINES
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

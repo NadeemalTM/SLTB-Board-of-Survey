@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-import 'field_verification_screen.dart';
+// import 'field_verification_screen.dart'; // REMOVED (Old)
 import '../../services/firestore_service.dart';
+import 'edit_asset_screen.dart'; // <--- ADDED
+import 'add_item_screen.dart'; // <--- ADDED
 
 /// Barcode Scanner Screen - Scan equipment barcodes for verification
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({Key? key}) : super(key: key);
+  const ScanScreen({super.key});
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -26,16 +28,14 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _ensurePermission() async {
-    if (kIsWeb) return; // Browser will prompt; handled by MobileScanner
+    if (kIsWeb) return;
     final status = await Permission.camera.status;
     if (!status.isGranted) {
       final result = await Permission.camera.request();
       setState(() => _hasPermission = result.isGranted);
       if (!result.isGranted && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera permission is required to scan barcodes.'),
-          ),
+          const SnackBar(content: Text('Camera permission is required.')),
         );
       }
     }
@@ -51,60 +51,48 @@ class _ScanScreenState extends State<ScanScreen> {
   Future<void> _handleBarcode(String code) async {
     if (_isProcessing) return;
 
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
 
     try {
-      // 1. Initialize Firestore Service
+      // Pause camera to reduce background processing/log spam while navigating
+      await cameraController.stop();
       final firestore = FirestoreService();
 
-      // 2. Check if the asset exists in the Cloud
+      // Check Firebase
       final doc = await firestore.getAsset(code);
 
       if (!mounted) return;
 
       if (doc.exists) {
-        // --- CASE A: ITEM EXISTS ---
-        // The item is already in the database. 
-        // We will send the data to the Verification Screen.
-        
+        // --- CASE A: ITEM FOUND (VERIFY) ---
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Item Found: ${data['description'] ?? "Unknown"}'), backgroundColor: Colors.green),
-        );
 
-        // TODO: Navigate to Edit/Verification Screen (We will create this next)
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => EditAssetScreen(data: data, docId: code)));
-
+        Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => EditAssetScreen(data: data, docId: code)))
+            .then((_) {
+          // Resume camera when returning to scan screen
+          cameraController.start();
+        });
       } else {
-        // --- CASE B: NEW ITEM ---
-        // The item is NOT in the database.
-        // We navigate to the "Add New Asset" screen.
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('New Item Detected!'), backgroundColor: Colors.blue),
-        );
-
-        // TODO: Navigate to Add Screen (We will create this next)
-        // Navigator.push(context, MaterialPageRoute(builder: (_) => AddAssetScreen(code: code)));
+        // --- CASE B: NEW ITEM (ADD) ---
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => AddItemScreen(scannedCode: code))).then((_) {
+          cameraController.start();
+        });
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
+        setState(() => _isProcessing = false);
       }
     }
   }
@@ -119,31 +107,21 @@ class _ScanScreenState extends State<ScanScreen> {
           controller: _manualCodeController,
           decoration: const InputDecoration(
             labelText: 'Barcode Number',
-            hintText: 'Type the barcode number',
             prefixIcon: Icon(Icons.qr_code),
             border: OutlineInputBorder(),
           ),
           autofocus: true,
-          keyboardType: TextInputType.text,
-          textCapitalization: TextCapitalization.characters,
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               final code = _manualCodeController.text.trim();
               if (code.isNotEmpty) {
                 Navigator.pop(context);
                 _handleBarcode(code);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a barcode number'),
-                  ),
-                );
               }
             },
             child: const Text('Submit'),
@@ -163,43 +141,22 @@ class _ScanScreenState extends State<ScanScreen> {
             icon: ValueListenableBuilder(
               valueListenable: cameraController.torchState,
               builder: (context, state, child) {
-                switch (state) {
-                  case TorchState.off:
-                    return const Icon(Icons.flash_off);
-                  case TorchState.on:
-                    return const Icon(Icons.flash_on);
-                }
+                return Icon(
+                    state == TorchState.off ? Icons.flash_off : Icons.flash_on);
               },
             ),
             onPressed: () => cameraController.toggleTorch(),
-            tooltip: 'Toggle Flash',
           ),
           IconButton(
             icon: const Icon(Icons.flip_camera_ios),
             onPressed: () => cameraController.switchCamera(),
-            tooltip: 'Switch Camera',
           ),
         ],
       ),
       body: !_hasPermission
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Camera permission not granted'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await openAppSettings();
-                    },
-                    child: const Text('Open Settings'),
-                  ),
-                ],
-              ),
-            )
+          ? const Center(child: Text('Camera permission not granted'))
           : Stack(
               children: [
-                // Full Screen Camera View - No overlay, no box
                 MobileScanner(
                   controller: cameraController,
                   onDetect: (capture) {
@@ -212,8 +169,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     }
                   },
                 ),
-
-                // Instructions at top
+                // Overlay Text
                 Positioned(
                   top: 24,
                   left: 16,
@@ -221,26 +177,16 @@ class _ScanScreenState extends State<ScanScreen> {
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+                          horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Text(
-                        'Point camera at barcode to scan',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(24)),
+                      child: const Text('Point camera at barcode',
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ),
-
-                // Manual Entry Button at bottom
+                // Manual Entry Button
                 Positioned(
                   bottom: 40,
                   left: 24,
@@ -250,42 +196,20 @@ class _ScanScreenState extends State<ScanScreen> {
                     icon: const Icon(Icons.keyboard),
                     label: const Text('Enter Barcode Manually'),
                     style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: const Color(0xFF0C3B2E),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                   ),
                 ),
-
-                // Processing Indicator
+                // Loading Spinner
                 if (_isProcessing)
                   Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: const Center(
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Loading asset...'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    color: Colors.black54,
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
               ],
             ),
     );
   }
 }
-

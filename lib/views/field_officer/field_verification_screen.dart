@@ -14,9 +14,9 @@ class FieldOfficerVerificationScreen extends ConsumerStatefulWidget {
   final AssetModel asset;
 
   const FieldOfficerVerificationScreen({
-    Key? key,
+    super.key,
     required this.asset,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<FieldOfficerVerificationScreen> createState() =>
@@ -413,7 +413,7 @@ class _FieldOfficerVerificationScreenState
 
               // Survey Status
               DropdownButtonFormField<String>(
-                value: _selectedStatus,
+                initialValue: _selectedStatus,
                 decoration: const InputDecoration(
                   labelText: 'Status',
                   prefixIcon: Icon(Icons.assignment_turned_in),

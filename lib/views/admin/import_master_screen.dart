@@ -1,306 +1,185 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/utils/csv_helper.dart';
-import '../../data/database/database_helper.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import '../../services/firestore_service.dart';
+import '../../widgets/region_selector.dart';
 
-/// Import Master Screen - Upload and import master CSV data
-class ImportMasterScreen extends ConsumerStatefulWidget {
-  const ImportMasterScreen({Key? key}) : super(key: key);
+class ImportMasterScreen extends StatefulWidget {
+  const ImportMasterScreen({super.key});
 
   @override
-  ConsumerState<ImportMasterScreen> createState() => _ImportMasterScreenState();
+  State<ImportMasterScreen> createState() => _ImportMasterScreenState();
 }
 
-class _ImportMasterScreenState extends ConsumerState<ImportMasterScreen> {
-  String? _selectedFilePath;
-  bool _isLoading = false;
-  String? _resultMessage;
-  bool _isSuccess = false;
+class _ImportMasterScreenState extends State<ImportMasterScreen> {
+  bool _isImporting = false;
+  String _statusMessage = "Ready to import.";
+  double _progress = 0.0;
+  
+  // Dropdown selection
+  String _selectedMain = "";
+  String _selectedSub = "";
 
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-    );
+  Future<void> _pickAndImport() async {
+    // Validate Selection
+    if (_selectedMain.isEmpty || _selectedSub.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select both Region and Sub-Region.')),
+      );
+      return;
+    }
 
-    if (result != null && result.files.single.path != null) {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        allowMultiple: false,
+      );
+
+      if (result == null) return;
+
       setState(() {
-        _selectedFilePath = result.files.single.path;
-        _resultMessage = null;
+        _isImporting = true;
+        _statusMessage = "Reading file...";
+        _progress = 0.1;
+      });
+
+      String csvContent;
+      if (kIsWeb) {
+        final bytes = result.files.first.bytes;
+        if (bytes == null) throw "Empty file";
+        csvContent = utf8.decode(bytes);
+      } else {
+        final file = File(result.files.single.path!);
+        csvContent = await file.readAsString();
+      }
+
+      // Pass the separate regions to the processor
+      await _processCsvData(csvContent, _selectedMain, _selectedSub);
+
+    } catch (e) {
+      setState(() {
+        _isImporting = false;
+        _statusMessage = "Error: $e";
       });
     }
   }
 
-  Future<void> _importData() async {
-    if (_selectedFilePath == null) return;
+  // Updated to accept main and sub regions separately
+  Future<void> _processCsvData(String csvString, String mainReg, String subReg) async {
+    final firestore = FirestoreService();
+    List<List<dynamic>> rows = const CsvToListConverter(eol: '\n').convert(csvString);
+
+    if (rows.isEmpty) {
+      setState(() => _statusMessage = "File is empty.");
+      return;
+    }
+
+    int total = rows.length;
+    int current = 0;
+    int successCount = 0;
+
+    for (int i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      current++;
+      setState(() {
+        _progress = current / total;
+        _statusMessage = "Uploading item $current of $total...";
+      });
+
+      try {
+        if (row.length < 6) continue;
+
+        String newCode = row[4].toString().trim();
+        if (newCode.isEmpty || newCode.toLowerCase().contains('new code')) continue;
+        String oldCode = row[3].toString().trim();
+        String description = row[2].toString().trim().replaceAll('"', '');
+
+        int bookBalance = 0;
+        var balanceRaw = row[5];
+        if (balanceRaw is int) bookBalance = balanceRaw;
+        else if (balanceRaw is double) bookBalance = balanceRaw.toInt();
+        else if (balanceRaw is String) bookBalance = int.tryParse(balanceRaw) ?? 0;
+
+        await firestore.addAsset(
+          newCode: newCode,
+          oldCode: oldCode,
+          description: description,
+          
+          mainRegion: mainReg, // <--- SEPARATE FIELD
+          subRegion: subReg,   // <--- SEPARATE FIELD
+          
+          bookBalance: bookBalance,
+          physicalBalance: 0,
+          status: 'Pending',
+          imagePaths: [],
+        );
+        successCount++;
+      } catch (e) {
+        debugPrint("Error on row $i: $e");
+      }
+    }
 
     setState(() {
-      _isLoading = true;
-      _resultMessage = null;
+      _isImporting = false;
+      _statusMessage = "Success! Imported $successCount items.";
+      _progress = 1.0;
     });
-
-    try {
-      // Validate CSV format
-      final isValid = await CsvHelper.validateMasterCsv(_selectedFilePath!);
-
-      if (!isValid) {
-        setState(() {
-          _isLoading = false;
-          _isSuccess = false;
-          _resultMessage =
-              'Invalid CSV format. Please check the file structure.';
-        });
-        return;
-      }
-
-      // Parse CSV
-      final assets = await CsvHelper.parseMasterCsv(_selectedFilePath!);
-
-      // Insert into database
-      final db = DatabaseHelper.instance;
-      await db.batchInsertFromMasterCsv(assets);
-
-      setState(() {
-        _isLoading = false;
-        _isSuccess = true;
-        _resultMessage =
-            'Successfully imported ${assets.length} assets into database';
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _isSuccess = false;
-        _resultMessage = 'Error: ${e.toString()}';
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import Master Data'),
-      ),
+      appBar: AppBar(title: const Text("Import Master Data")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Instructions Card
-            Card(
-              color: Colors.blue[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.info, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'CSV Format Requirements',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'The master CSV file must contain these columns:',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildFormatItem('1. Serial No'),
-                    _buildFormatItem('2. Description'),
-                    _buildFormatItem('3. Old Code'),
-                    _buildFormatItem('4. New Code (unique identifier)'),
-                    _buildFormatItem('5. Book Balance'),
-                    const SizedBox(height: 12),
-                    Text(
-                      '⚠️ Warning: Importing will replace existing master data',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.orange[900],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const Icon(Icons.upload_file, size: 80, color: Colors.blue),
             const SizedBox(height: 24),
-
-            // File Selection
-            const Text(
-              'Select CSV File',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: InkWell(
-                onTap: _isLoading ? null : _pickFile,
+            const Text("Import Old Database", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            
+            // --- DROPDOWN WIDGET ---
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.upload_file,
-                        size: 64,
-                        color: _selectedFilePath != null
-                            ? Colors.green
-                            : Colors.grey,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _selectedFilePath != null
-                            ? _selectedFilePath!.split('\\').last
-                            : 'Tap to select CSV file',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _selectedFilePath != null
-                              ? Colors.black87
-                              : Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (_selectedFilePath != null) ...[
-                        const SizedBox(height: 8),
-                        Chip(
-                          avatar: const Icon(Icons.check_circle,
-                              color: Colors.white, size: 18),
-                          label: const Text('File Selected'),
-                          backgroundColor: Colors.green,
-                          labelStyle: const TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+              ),
+              child: RegionSelector(
+                onSelectionChanged: (main, sub) {
+                  setState(() {
+                    _selectedMain = main;
+                    _selectedSub = sub;
+                  });
+                },
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Import Button
-            ElevatedButton.icon(
-              onPressed:
-                  _selectedFilePath != null && !_isLoading ? _importData : null,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(Icons.cloud_upload),
-              label: Text(_isLoading ? 'Importing...' : 'Import Data'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF0C3B2E),
-                foregroundColor: Colors.white,
-              ),
-            ),
-
-            // Result Message
-            if (_resultMessage != null) ...[
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _isSuccess ? Colors.green[50] : Colors.red[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isSuccess ? Colors.green[200]! : Colors.red[200]!,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _isSuccess ? Icons.check_circle : Icons.error,
-                      color: _isSuccess ? Colors.green[700] : Colors.red[700],
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _resultMessage!,
-                        style: TextStyle(
-                          color:
-                              _isSuccess ? Colors.green[700] : Colors.red[700],
-                        ),
-                      ),
-                    ),
-                  ],
+            
+            const SizedBox(height: 40),
+            
+            if (_isImporting) ...[
+              LinearProgressIndicator(value: _progress),
+              const SizedBox(height: 16),
+              Text(_statusMessage),
+            ] else ...[
+              ElevatedButton.icon(
+                onPressed: _pickAndImport,
+                icon: const Icon(Icons.file_open),
+                label: const Text("Select CSV File"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  backgroundColor: const Color(0xFF0C3B2E),
+                  foregroundColor: Colors.white,
                 ),
               ),
-            ],
-
-            // Sample Format
-            const SizedBox(height: 32),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.table_chart, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Sample CSV Format',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Serial No,Description,Old Code,New Code,Book Balance\n'
-                        '1,Desktop Computer,OLD-001,NEW-001,5\n'
-                        '2,Office Chair,OLD-002,NEW-002,20\n'
-                        '3,Printer HP LaserJet,OLD-003,NEW-003,3',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            ]
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFormatItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8, top: 4),
-      child: Row(
-        children: [
-          Icon(Icons.check, size: 16, color: Colors.green[700]),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(fontSize: 13)),
-        ],
       ),
     );
   }

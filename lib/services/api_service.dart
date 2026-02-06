@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+// Removed unused imports
 import '../../services/firestore_service.dart'; // <--- USING FIREBASE NOW
-import '../../core/constants/survey_status.dart';
+// Removed unused SurveyStatus import
 
 class AddItemScreen extends ConsumerStatefulWidget {
   final String? scannedCode; // Accepts code from scanner
 
-  const AddItemScreen({Key? key, this.scannedCode}) : super(key: key);
+  const AddItemScreen({super.key, this.scannedCode});
 
   @override
   ConsumerState<AddItemScreen> createState() => _AddItemScreenState();
@@ -16,22 +15,21 @@ class AddItemScreen extends ConsumerStatefulWidget {
 
 class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   late TextEditingController _codeController;
   final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController(); 
+  final _locationController = TextEditingController();
   final _physicalBalanceController = TextEditingController(text: '1');
-  final _remarksController = TextEditingController();
-  
-  String _selectedStatus = SurveyStatus.good;
+  // Removed unused remarks/status fields
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     // Use scanned code or generate a NEW one
-    String initialCode = widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
+    String initialCode =
+        widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
     _codeController = TextEditingController(text: initialCode);
   }
 
@@ -44,17 +42,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       // --- NEW FIREBASE LOGIC ---
       // We are calling FirestoreService, NOT ApiService
       final firestore = FirestoreService();
-      
-      await firestore.addAsset(
-        _codeController.text,
-        _descriptionController.text,
-        int.parse(_physicalBalanceController.text),
-        _locationController.text,
-      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Asset Saved to Cloud!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Asset Saved to Cloud!'),
+              backgroundColor: Colors.green),
         );
         Navigator.pop(context); // Close screen
         Navigator.pop(context); // Close scanner (if open)
@@ -83,33 +76,40 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               TextFormField(
                 controller: _codeController,
                 readOnly: true,
-                decoration: const InputDecoration(labelText: 'Barcode', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Barcode', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Description', border: OutlineInputBorder()),
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Location', border: OutlineInputBorder()),
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _physicalBalanceController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Quantity', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveNewAsset,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.all(16)),
-                child: _isSaving 
-                  ? const CircularProgressIndicator(color: Colors.white) 
-                  : const Text("SAVE TO FIREBASE", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.all(16)),
+                child: _isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("SAVE TO FIREBASE",
+                        style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

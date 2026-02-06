@@ -9,45 +9,44 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Data Import/Export
+  csv: ^6.0.0
   
-  # HTTP client for API calls
+  # File Sharing & Saving (Upgraded to fix Firebase conflict)
+  share_plus: ^10.0.0 
+  path_provider: ^2.1.1
+
+  # HTTP client
   http: ^1.2.0
 
-  # MySQL Direct Connection
+  # MySQL
   mysql1: ^0.20.0
 
   # State Management
   flutter_riverpod: ^2.4.9
   riverpod_annotation: ^2.3.3
 
-  # Database (Mandatory for offline functionality)
+  # Database
   sqflite: ^2.3.0
   path: ^1.8.3
-  path_provider: ^2.1.1
 
-  # CSV Handling
-  csv: ^5.1.1
-
-  # Barcode/QR Scanning
+  # Scanning
   mobile_scanner: ^3.5.5
 
-  # Image Handling
+  # Images
   image_picker: ^1.0.5
 
-  # Date/Time Utilities
+  # Utilities
   intl: ^0.18.1
-
-  # File Picker
   file_picker: ^8.0.0
-
-  # Permissions
   permission_handler: ^11.1.0
 
-  # UI Components
+  # UI
   flutter_slidable: ^3.0.1
-
-  # Icons
   cupertino_icons: ^1.0.6
+  
+  # Firebase
   firebase_core: ^4.4.0
   cloud_firestore: ^6.1.2
 
@@ -61,7 +60,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
+
   assets:
     - lib/img/logo.png
 

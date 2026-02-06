@@ -8,12 +8,12 @@ class SummaryCard extends StatefulWidget {
   final Color color;
 
   const SummaryCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   State<SummaryCard> createState() => _SummaryCardState();

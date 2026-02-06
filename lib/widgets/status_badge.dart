@@ -6,11 +6,11 @@ class StatusBadge extends StatelessWidget {
   final IconData? icon;
 
   const StatusBadge({
-    Key? key,
+    super.key,
     required this.label,
     required this.color,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +51,11 @@ class AnimatedCounterText extends StatefulWidget {
   final Duration duration;
 
   const AnimatedCounterText({
-    Key? key,
+    super.key,
     required this.value,
     this.style,
     this.duration = const Duration(milliseconds: 800),
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedCounterText> createState() => _AnimatedCounterTextState();

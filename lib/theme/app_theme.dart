@@ -12,16 +12,15 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: primaryGreen,
       secondary: secondaryGold,
-      surface: const Color(0xFFF5F5F5),
-      background: const Color(0xFFFFFFFF),
-      error: const Color(0xFFB00020),
+      surface: Color(0xFFF5F5F5),
+      background: Color(0xFFFFFFFF),
+      error: Color(0xFFB00020),
       onPrimary: Colors.white,
       onSecondary: Colors.black,
       onSurface: Colors.black87,
-      onBackground: Colors.black87,
     ),
     scaffoldBackgroundColor: const Color(0xFFF0F4F0),
     cardTheme: const CardThemeData(
@@ -31,13 +30,13 @@ class AppTheme {
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: primaryGreen,
       foregroundColor: Colors.white,
       elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: IconThemeData(color: Colors.white),
     ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primaryGreen,
       foregroundColor: Colors.white,
     ),
@@ -70,16 +69,15 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: lightGreen,
       secondary: secondaryGold,
-      surface: const Color(0xFF1E1E1E),
-      background: const Color(0xFF121212),
-      error: const Color(0xFFCF6679),
+      surface: Color(0xFF1E1E1E),
+      background: Color(0xFF121212),
+      error: Color(0xFFCF6679),
       onPrimary: Colors.black,
       onSecondary: Colors.black,
       onSurface: Colors.white,
-      onBackground: Colors.white,
     ),
     scaffoldBackgroundColor: const Color(0xFF0D1B0E),
     cardTheme: const CardThemeData(
@@ -89,13 +87,13 @@ class AppTheme {
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: darkGreen,
       foregroundColor: Colors.white,
       elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: IconThemeData(color: Colors.white),
     ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: lightGreen,
       foregroundColor: Colors.black,
     ),
@@ -116,11 +114,11 @@ class AppTheme {
         ),
       ),
     ),
-    chipTheme: ChipThemeData(
-      backgroundColor: const Color(0xFF2A2A2A),
+    chipTheme: const ChipThemeData(
+      backgroundColor: Color(0xFF2A2A2A),
       selectedColor: lightGreen,
       secondarySelectedColor: secondaryGold,
-      labelStyle: const TextStyle(color: Colors.white),
+      labelStyle: TextStyle(color: Colors.white),
     ),
   );
 }

@@ -10,13 +10,13 @@ class FilterChipBar extends StatelessWidget {
   final VoidCallback onClearFilters;
 
   const FilterChipBar({
-    Key? key,
+    super.key,
     this.selectedStatus,
     this.selectedSurveyFilter,
     required this.onStatusChanged,
     required this.onSurveyFilterChanged,
     required this.onClearFilters,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +71,7 @@ class FilterChipBar extends StatelessWidget {
                 },
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

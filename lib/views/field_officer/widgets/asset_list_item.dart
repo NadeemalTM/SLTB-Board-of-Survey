@@ -7,10 +7,10 @@ class AssetListItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const AssetListItem({
-    Key? key,
+    super.key,
     required this.asset,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

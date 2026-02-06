@@ -12,9 +12,9 @@ class AssetDetailScreen extends ConsumerStatefulWidget {
   final AssetModel asset;
 
   const AssetDetailScreen({
-    Key? key,
+    super.key,
     required this.asset,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<AssetDetailScreen> createState() => _AssetDetailScreenState();
@@ -284,7 +284,7 @@ class _AssetDetailScreenState extends ConsumerState<AssetDetailScreen> {
 
                     // Survey Status
                     DropdownButtonFormField<String>(
-                      value: _selectedStatus,
+                      initialValue: _selectedStatus,
                       decoration: const InputDecoration(
                         labelText: 'Survey Status',
                         prefixIcon: Icon(Icons.assignment_turned_in),

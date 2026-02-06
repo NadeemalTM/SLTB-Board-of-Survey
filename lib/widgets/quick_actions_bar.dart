@@ -7,12 +7,12 @@ class QuickActionButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const QuickActionButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,12 +81,12 @@ class QuickActionsBar extends StatelessWidget {
   final VoidCallback onImport;
 
   const QuickActionsBar({
-    Key? key,
+    super.key,
     required this.onScan,
     required this.onAdd,
     required this.onExport,
     required this.onImport,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,15 +97,15 @@ class QuickActionsBar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Icon(
                   Icons.flash_on,
-                  color: const Color(0xFFFFD700),
+                  color: Color(0xFFFFD700),
                   size: 20,
                 ),
-                const SizedBox(width: 8),
-                const Text(
+                SizedBox(width: 8),
+                Text(
                   'Quick Actions',
                   style: TextStyle(
                     fontSize: 16,

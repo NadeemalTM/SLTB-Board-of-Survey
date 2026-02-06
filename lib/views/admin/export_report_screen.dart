@@ -5,7 +5,7 @@ import '../../data/database/database_helper.dart';
 
 /// Export Report Screen - Generate and download survey reports
 class ExportReportScreen extends ConsumerStatefulWidget {
-  const ExportReportScreen({Key? key}) : super(key: key);
+  const ExportReportScreen({super.key});
 
   @override
   ConsumerState<ExportReportScreen> createState() =>
@@ -259,7 +259,7 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
                             color: const Color(0xFF0C3B2E),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.person,
                             size: 32,
                             color: Colors.white,

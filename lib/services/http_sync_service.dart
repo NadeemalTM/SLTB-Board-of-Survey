@@ -64,7 +64,7 @@ class HttpSyncService {
             headers: {'Content-Type': 'application/json'},
             body: body,
           )
-          .timeout(Duration(seconds: _timeoutSeconds));
+          .timeout(const Duration(seconds: _timeoutSeconds));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -90,7 +90,7 @@ class HttpSyncService {
     try {
       final url = Uri.parse('$_baseUrl/save_asset.php');
       final response =
-          await http.get(url).timeout(Duration(seconds: _timeoutSeconds));
+          await http.get(url).timeout(const Duration(seconds: _timeoutSeconds));
       return response.statusCode == 200;
     } catch (e) {
       debugPrint('Connection test failed: $e');

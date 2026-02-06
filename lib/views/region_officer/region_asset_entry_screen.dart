@@ -15,10 +15,10 @@ class RegionAssetEntryScreen extends ConsumerStatefulWidget {
   final String scannedCode;
 
   const RegionAssetEntryScreen({
-    Key? key,
+    super.key,
     this.asset,
     required this.scannedCode,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<RegionAssetEntryScreen> createState() =>
@@ -419,7 +419,7 @@ class _RegionAssetEntryScreenState
 
               // Survey Status
               DropdownButtonFormField<String>(
-                value: _selectedStatus,
+                initialValue: _selectedStatus,
                 decoration: const InputDecoration(
                   labelText: 'Status *',
                   prefixIcon: Icon(Icons.assignment_turned_in),

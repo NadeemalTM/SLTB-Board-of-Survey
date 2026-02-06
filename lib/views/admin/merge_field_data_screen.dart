@@ -6,7 +6,7 @@ import '../../data/database/database_helper.dart';
 
 /// Merge Field Data Screen - Import field officer survey data
 class MergeFieldDataScreen extends ConsumerStatefulWidget {
-  const MergeFieldDataScreen({Key? key}) : super(key: key);
+  const MergeFieldDataScreen({super.key});
 
   @override
   ConsumerState<MergeFieldDataScreen> createState() =>
@@ -122,11 +122,11 @@ class _MergeFieldDataScreenState extends ConsumerState<MergeFieldDataScreen> {
                     _buildFormatItem('Remarks and image paths'),
                     _buildFormatItem('Last updated by and date'),
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       'ℹ️ Matching is done using New Code field',
                       style: TextStyle(
                         fontSize: 13,
-                        color: const Color(0xFF0C3B2E),
+                        color: Color(0xFF0C3B2E),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -175,12 +175,12 @@ class _MergeFieldDataScreenState extends ConsumerState<MergeFieldDataScreen> {
                       ),
                       if (_selectedFilePath != null) ...[
                         const SizedBox(height: 8),
-                        Chip(
-                          avatar: const Icon(Icons.check_circle,
+                        const Chip(
+                          avatar: Icon(Icons.check_circle,
                               color: Colors.white, size: 18),
-                          label: const Text('File Selected'),
+                          label: Text('File Selected'),
                           backgroundColor: Colors.green,
-                          labelStyle: const TextStyle(color: Colors.white),
+                          labelStyle: TextStyle(color: Colors.white),
                         ),
                       ],
                     ],

@@ -7,7 +7,7 @@ import '../region_officer/region_dashboard.dart';
 
 /// Login Screen - Entry point for authentication
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -317,12 +317,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              const Row(
                                 children: [
-                                  const Icon(Icons.info_outline,
+                                  Icon(Icons.info_outline,
                                       size: 20, color: Color(0xFFFFD700)),
-                                  const SizedBox(width: 8),
-                                  const Text(
+                                  SizedBox(width: 8),
+                                  Text(
                                     'Demo Accounts',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,

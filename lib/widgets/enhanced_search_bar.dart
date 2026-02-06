@@ -8,13 +8,13 @@ class EnhancedSearchBar extends StatefulWidget {
   final List<String> suggestions;
 
   const EnhancedSearchBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.onSearch,
     this.onClear,
     this.hintText = 'Search...',
     this.suggestions = const [],
-  }) : super(key: key);
+  });
 
   @override
   State<EnhancedSearchBar> createState() => _EnhancedSearchBarState();
@@ -94,9 +94,9 @@ class _EnhancedSearchBarState extends State<EnhancedSearchBar>
             onChanged: widget.onSearch,
             decoration: InputDecoration(
               hintText: widget.hintText,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.search,
-                color: const Color(0xFF2E7D32),
+                color: Color(0xFF2E7D32),
               ),
               suffixIcon: widget.controller.text.isNotEmpty
                   ? IconButton(
@@ -189,7 +189,7 @@ class _EnhancedSearchBarState extends State<EnhancedSearchBar>
                           _focusNode.unfocus();
                         },
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

@@ -10,7 +10,7 @@ import 'sync_screen.dart';
 
 /// Admin Dashboard - Main screen for administrator
 class AdminDashboard extends ConsumerStatefulWidget {
-  const AdminDashboard({Key? key}) : super(key: key);
+  const AdminDashboard({super.key});
 
   @override
   ConsumerState<AdminDashboard> createState() => _AdminDashboardState();
@@ -128,9 +128,9 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
+                          const CircleAvatar(
                             radius: 30,
-                            backgroundColor: const Color(0xFF0C3B2E),
+                            backgroundColor: Color(0xFF0C3B2E),
                             child: Icon(
                               Icons.admin_panel_settings,
                               size: 32,
@@ -150,9 +150,8 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                                   ),
                                 ),
                                 Text(
-                                  authState.currentUser?.role.name
-                                          .toUpperCase() ??
-                                      'ADMINISTRATOR',
+                                  authState.currentUser?.role.toUpperCase() ??
+                                      'ADMINISTRATOR', // <--- Removed .name
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[700],
@@ -203,7 +202,8 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                     MaterialPageRoute(
                       builder: (_) => const SyncScreen(),
                     ),
-                  ).then((_) => _handleRefresh()); // Refresh stats after syncing
+                  ).then(
+                      (_) => _handleRefresh()); // Refresh stats after syncing
                 },
               ),
               // -----------------------

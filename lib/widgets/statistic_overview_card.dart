@@ -7,12 +7,12 @@ class StatisticOverviewCard extends StatefulWidget {
   final double completionPercentage;
 
   const StatisticOverviewCard({
-    Key? key,
+    super.key,
     required this.totalItems,
     required this.surveyedItems,
     required this.pendingItems,
     required this.completionPercentage,
-  }) : super(key: key);
+  });
 
   @override
   State<StatisticOverviewCard> createState() => _StatisticOverviewCardState();

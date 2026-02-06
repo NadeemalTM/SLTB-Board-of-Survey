@@ -9,13 +9,13 @@ class CircularProgressCard extends StatefulWidget {
   final IconData icon;
 
   const CircularProgressCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.completed,
     required this.total,
     required this.color,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   State<CircularProgressCard> createState() => _CircularProgressCardState();

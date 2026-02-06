@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
 
-  const ShimmerLoading({Key? key, required this.child}) : super(key: key);
+  const ShimmerLoading({super.key, required this.child});
 
   @override
   State<ShimmerLoading> createState() => _ShimmerLoadingState();
@@ -71,11 +71,11 @@ class LoadingSkeleton extends StatelessWidget {
   final BorderRadius? borderRadius;
 
   const LoadingSkeleton({
-    Key? key,
+    super.key,
     this.width,
     this.height = 16,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +95,7 @@ class LoadingSkeleton extends StatelessWidget {
 }
 
 class AssetListSkeleton extends StatelessWidget {
-  const AssetListSkeleton({Key? key}) : super(key: key);
+  const AssetListSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +151,7 @@ class AssetListSkeleton extends StatelessWidget {
 }
 
 class StatCardSkeleton extends StatelessWidget {
-  const StatCardSkeleton({Key? key}) : super(key: key);
+  const StatCardSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

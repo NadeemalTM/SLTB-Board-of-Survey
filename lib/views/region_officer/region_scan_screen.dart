@@ -2,23 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../data/database/database_helper.dart';
 import 'region_asset_entry_screen.dart';
 
 /// Barcode Scanner Screen for Regional Officers
 /// Regional officers scan barcodes to enter/update asset data
 class RegionScanScreen extends StatefulWidget {
-  const RegionScanScreen({Key? key}) : super(key: key);
+  const RegionScanScreen({super.key});
 
   @override
   State<RegionScanScreen> createState() => _RegionScanScreenState();
 }
 
 class _RegionScanScreenState extends State<RegionScanScreen> {
-  MobileScannerController cameraController = MobileScannerController();
+  MobileScannerController cameraController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.normal,
+    detectionTimeoutMs: 250,
+  );
   bool _isProcessing = false;
   bool _hasPermission = true;
   final TextEditingController _manualCodeController = TextEditingController();
+  // Additional toggles can be added here if needed
 
   @override
   void initState() {
@@ -171,6 +176,26 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
     );
   }
 
+  Future<void> _scanFromGallery() async {
+    try {
+      final picker = await Future.sync(() => ImagePicker());
+      final image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+      await cameraController.analyzeImage(image.path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Analyzing selected image...')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image scan failed: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,6 +222,11 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
             onPressed: () => cameraController.switchCamera(),
             tooltip: 'Switch Camera',
           ),
+          IconButton(
+            tooltip: 'Scan from gallery',
+            icon: const Icon(Icons.photo_library),
+            onPressed: _scanFromGallery,
+          ),
         ],
       ),
       body: !_hasPermission
@@ -215,21 +245,30 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
                 ],
               ),
             )
-          : Stack(
-              children: [
-                // Full Screen Camera View - No overlay, no box
-                MobileScanner(
-                  controller: cameraController,
-                  onDetect: (capture) {
-                    final List<Barcode> barcodes = capture.barcodes;
-                    if (barcodes.isNotEmpty && !_isProcessing) {
-                      final code = barcodes.first.rawValue;
-                      if (code != null && code.isNotEmpty) {
-                        _handleBarcode(code);
-                      }
-                    }
-                  },
-                ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final Rect scanWindow = Rect.fromCenter(
+                  center:
+                      Offset(constraints.maxWidth / 2, constraints.maxHeight / 2),
+                  width: constraints.maxWidth * 0.8,
+                  height: constraints.maxHeight * 0.28,
+                );
+                return Stack(
+                  children: [
+                    // Camera view with central scan window
+                    MobileScanner(
+                      controller: cameraController,
+                      scanWindow: scanWindow,
+                      onDetect: (capture) {
+                        final List<Barcode> barcodes = capture.barcodes;
+                        if (barcodes.isNotEmpty && !_isProcessing) {
+                          final code = barcodes.first.rawValue;
+                          if (code != null && code.isNotEmpty) {
+                            _handleBarcode(code);
+                          }
+                        }
+                      },
+                    ),
 
                 // Instructions at top
                 Positioned(
@@ -254,6 +293,15 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                    ),
+                  ),
+                ),
+
+                // Scan window overlay mask
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _ScanWindowPainter(scanWindow: scanWindow),
                     ),
                   ),
                 ),
@@ -301,8 +349,38 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
                       ),
                     ),
                   ),
-              ],
+                  ],
+                );
+              },
             ),
     );
+  }
+}
+
+class _ScanWindowPainter extends CustomPainter {
+  final Rect scanWindow;
+  _ScanWindowPainter({required this.scanWindow});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.black54;
+    final path = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRRect(RRect.fromRectXY(scanWindow, 16, 16));
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, path, Path()..addRRect(RRect.fromRectXY(scanWindow, 16, 16))),
+      paint,
+    );
+
+    final border = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawRRect(RRect.fromRectXY(scanWindow, 16, 16), border);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScanWindowPainter oldDelegate) {
+    return oldDelegate.scanWindow != scanWindow;
   }
 }

@@ -1,5 +1,5 @@
 /// Asset Model - Represents a single asset/equipment in the survey
-/// 
+///
 /// This model contains both the original master data fields and
 /// the new survey fields populated by field officers.
 class AssetModel {
@@ -124,6 +124,30 @@ class AssetModel {
       lastUpdatedBy: map['last_updated_by'] as String?,
       lastUpdatedDate: map['last_updated_date'] as String?,
       isNewItem: map['is_new_item'] as int? ?? 0,
+    );
+  }
+
+  /// Create AssetModel from Firestore document data
+  factory AssetModel.fromFirestore(Map<String, dynamic> data) {
+    return AssetModel(
+      serialNo: data['serialNo'] as int?,
+      description: (data['description'] ?? '') as String,
+      oldCode: data['oldCode'] as String?,
+      newCode: (data['newCode'] ?? '') as String,
+      bookBalance: (data['bookBalance'] as num?)?.toInt() ?? 0,
+      physicalBalance: (data['physicalBalance'] as num?)?.toInt() ?? 0,
+      excess: (data['excess'] as num?)?.toInt() ?? 0,
+      shortage: (data['shortage'] as num?)?.toInt() ?? 0,
+      remarks: data['remarks'] as String?,
+      surveyStatus: data['status'] as String?,
+      enteredBy: data['enteredBy'] as String?,
+      enteredDate: data['enteredDate'] as String?,
+      verifiedBy: data['verifiedBy'] as String?,
+      verifiedDate: data['verifiedDate'] as String?,
+      verificationStatus: data['approvalStatus'] as String? ?? 'pending',
+      lastUpdatedBy: data['lastUpdatedBy'] as String?,
+      lastUpdatedDate: data['lastUpdatedDate'] as String?,
+      isNewItem: (data['isNew'] == true) ? 1 : 0,
     );
   }
 

@@ -1,11 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/dashboard_provider.dart';
+import 'pending_verification_list_screen.dart';
+import '../scan/scan_screen.dart';
+import '../scan/add_item_screen.dart';
+import '../auth/login_screen.dart';
+import 'verified_items_screen.dart';
 
-// NOTE: This is essentially a clone of RegionDashboard logic 
-// but tailored for the Field Officer's view.
-
+/// Field Officer Dashboard - mirrored to Region Officer dashboard style
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -14,167 +17,397 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  String get _collectionName => 'survey_${DateTime.now().year}';
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dashboardProvider.notifier).loadStats();
+    });
+  }
+
+  Future<void> _handleRefresh() async {
+    await ref.read(dashboardProvider.notifier).loadStats();
+  }
+
+  Future<bool> _onBackPressed() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      ref.read(authProvider.notifier).logout();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final user = authState.currentUser;
+    final dashboardState = ref.watch(dashboardProvider);
 
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Field Officer Dashboard", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text("Auditor: ${user.username}", style: const TextStyle(fontSize: 12)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onBackPressed();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Field Officer Dashboard'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _handleRefresh,
+              tooltip: 'Refresh',
+            ),
           ],
         ),
-        backgroundColor: const Color(0xFF0C3B2E),
-        foregroundColor: Colors.white,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        // FETCH DATA: If user is assigned to "Galle", show all Galle items
-        stream: FirebaseFirestore.instance
-            .collection(_collectionName)
-            .where('mainRegion', isEqualTo: user.mainRegion)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-          final docs = snapshot.data!.docs;
-
-          // --- STATS LOGIC ---
-          final totalAssets = docs.length;
-          // Verified = Approval Level is 1 (Auditor) or 2 (Admin)
-          final verifiedCount = docs.where((d) => (d['approvalLevel'] ?? 0) >= 1).length;
-          // Pending = Approval Level 0 (Waiting for Auditor)
-          final pendingCount = docs.where((d) => (d['approvalLevel'] ?? 0) == 0).length;
-          
-          final completionRate = totalAssets == 0 ? 0.0 : (verifiedCount / totalAssets);
-
-          // --- BREAKDOWN LOGIC ---
-          int good = 0, broken = 0, missing = 0, dispose = 0;
-          for (var doc in docs) {
-            final status = (doc['status'] ?? '').toString().toLowerCase();
-            if (status == 'good') good++;
-            else if (status == 'broken') broken++;
-            else if (status == 'missing') missing++;
-            else dispose++;
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. SUMMARY CARDS
-                Row(
-                  children: [
-                    _buildStatCard("Total Assets", totalAssets.toString(), Colors.blue, Icons.folder),
-                    const SizedBox(width: 12),
-                    _buildStatCard("Verified", verifiedCount.toString(), Colors.green, Icons.fact_check),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildStatCard("To Verify", pendingCount.toString(), Colors.orange, Icons.pending),
-                    const SizedBox(width: 12),
-                    _buildStatCard("Progress", "${(completionRate * 100).toStringAsFixed(0)}%", Colors.purple, Icons.percent),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // 2. CONDITION REPORT (Replaces Quick Actions)
-                const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Condition Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
-                ),
-                const SizedBox(height: 16),
-                
+                // Welcome Card
                 Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildStatusBar("Good", good, totalAssets, Colors.green),
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Color(0xFF0C3B2E),
+                              child: Icon(
+                                Icons.badge,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Welcome, ${authState.currentUser?.displayName ?? 'Field Officer'}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'FIELD OFFICER',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 16),
-                        _buildStatusBar("Broken", broken, totalAssets, Colors.red),
-                        const SizedBox(height: 16),
-                        _buildStatusBar("Missing", missing, totalAssets, Colors.orange),
-                        const SizedBox(height: 16),
-                        _buildStatusBar("Disposal", dispose, totalAssets, Colors.grey),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Survey Overview',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+                const SizedBox(height: 20),
 
-  // Reuse the same widget helper functions
-  Widget _buildStatCard(String title, String value, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5, offset: const Offset(0, 3)),
-          ],
-          border: Border(left: BorderSide(color: color, width: 4)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Icon(icon, color: color, size: 24),
+                // Statistics Overview
+                if (dashboardState.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else ...[
+                  _buildStatsGrid(dashboardState.stats),
+                  const SizedBox(height: 20),
+                  _buildStatusBreakdown(dashboardState.stats),
+                  const SizedBox(height: 20),
+                  _buildQuickActions(),
+                ],
               ],
             ),
-            const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusBar(String label, int count, int total, Color color) {
-    double pct = total == 0 ? 0.0 : count / total;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildStatsGrid(stats) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.5,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text("$count", style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-          ],
+        _buildStatCard(
+          'Total Assets',
+          stats.totalItems.toString(),
+          Icons.inventory_2,
+          Colors.blue,
         ),
-        const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: pct,
-          backgroundColor: Colors.grey[100],
-          color: color,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
+        _buildStatCard(
+          'Verified',
+          stats.surveyedItems.toString(),
+          Icons.check_circle,
+          Colors.green,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const VerifiedItemsScreen(),
+              ),
+            ).then((_) => _handleRefresh());
+          },
+        ),
+        _buildStatCard(
+          'Pending',
+          stats.pendingItems.toString(),
+          Icons.pending,
+          Colors.orange,
+        ),
+        _buildStatCard(
+          'Completion',
+          '${stats.completionPercentage.toStringAsFixed(1)}%',
+          Icons.pie_chart,
+          const Color(0xFF0C3B2E),
         ),
       ],
     );
   }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color,
+      {VoidCallback? onTap}) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 28, color: color),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[400],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBreakdown(stats) {
+    final statusItems = [
+      _StatusItem('Good', stats.goodCount, Colors.green),
+      _StatusItem('Broken', stats.brokenCount, Colors.red),
+      _StatusItem('Repairable', stats.repairableCount, Colors.orange),
+      _StatusItem('To be Disposed', stats.toBeDisposedCount, Colors.purple),
+      _StatusItem('New Found', stats.newFoundCount, Colors.grey),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.pie_chart_outline, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Status Breakdown',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...statusItems.map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: item.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Text(
+                        item.count.toString(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: item.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.flash_on, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Quick Actions',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF0C3B2E),
+                child: Icon(Icons.fact_check, color: Colors.white),
+              ),
+              title: const Text('Pending Verification'),
+              subtitle: const Text('Review and verify pending assets'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PendingVerificationListScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF0C3B2E),
+                child: Icon(Icons.qr_code_scanner, color: Colors.white),
+              ),
+              title: const Text('Scan Barcode'),
+              subtitle: const Text('Scan to enter/update asset data'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ScanScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF0C3B2E),
+                child: Icon(Icons.add_box, color: Colors.white),
+              ),
+              title: const Text('Add New Asset'),
+              subtitle: const Text('Manually add new asset without scanning'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                final timestamp = DateTime.now().millisecondsSinceEpoch;
+                final newCode = 'MANUAL-$timestamp';
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AddItemScreen(scannedCode: newCode),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusItem {
+  final String label;
+  final int count;
+  final Color color;
+
+  _StatusItem(this.label, this.count, this.color);
 }

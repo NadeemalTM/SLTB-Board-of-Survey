@@ -62,198 +62,207 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
     final authState = ref.watch(authProvider);
     final dashboardState = ref.watch(dashboardProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cloud_sync), // Different icon to distinguish
-            tooltip: 'Sync Data',
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SyncScreen()),
-              );
-              _handleRefresh();
-            },
-          ),
-          // ------------------------
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _handleRefresh,
-            tooltip: 'Refresh',
-          ),
-          PopupMenuButton<String>(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: Row(
-                  children: [
-                    const Icon(Icons.person, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(authState.currentUser?.displayName ?? 'Admin'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                child: const Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Logout'),
-                  ],
-                ),
-                onTap: () {
-                  Future.delayed(Duration.zero, _handleLogout);
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Welcome Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _handleLogout();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Admin Dashboard'),
+          actions: [
+            IconButton(
+              icon:
+                  const Icon(Icons.cloud_sync), // Different icon to distinguish
+              tooltip: 'Sync Data',
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SyncScreen()),
+                );
+                _handleRefresh();
+              },
+            ),
+            // ------------------------
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _handleRefresh,
+              tooltip: 'Refresh',
+            ),
+            PopupMenuButton<String>(
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color(0xFF0C3B2E),
-                            child: Icon(
-                              Icons.admin_panel_settings,
-                              size: 32,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Welcome, ${authState.currentUser?.displayName ?? 'Admin'}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  authState.currentUser?.role.toUpperCase() ??
-                                      'ADMINISTRATOR', // <--- Removed .name
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      const Icon(Icons.person, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(authState.currentUser?.displayName ?? 'Admin'),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Statistics Cards
-              const Text(
-                'Survey Overview',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  child: const Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Logout'),
+                    ],
+                  ),
+                  onTap: () {
+                    Future.delayed(Duration.zero, _handleLogout);
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildStatsGrid(dashboardState),
-              const SizedBox(height: 24),
-
-              // Management Actions
-              const Text(
-                'Data Management',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              ],
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Welcome Card
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Color(0xFF0C3B2E),
+                              child: Icon(
+                                Icons.admin_panel_settings,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Welcome, ${authState.currentUser?.displayName ?? 'Admin'}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    authState.currentUser?.role.toUpperCase() ??
+                                        'ADMINISTRATOR', // <--- Removed .name
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-              // --- FIXED SYNC CARD ---
-              _buildActionCard(
-                icon: Icons.sync,
-                title: 'Sync Data',
-                subtitle: 'Download from Server & Upload Changes',
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SyncScreen(),
-                    ),
-                  ).then(
-                      (_) => _handleRefresh()); // Refresh stats after syncing
-                },
-              ),
-              // -----------------------
+                // Statistics Cards
+                const Text(
+                  'Survey Overview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildStatsGrid(dashboardState),
+                const SizedBox(height: 24),
 
-              _buildActionCard(
-                icon: Icons.upload_file,
-                title: 'Import Master Data',
-                subtitle: 'Upload master CSV file with asset list',
-                color: const Color(0xFF0C3B2E),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ImportMasterScreen(),
-                    ),
-                  ).then((_) => _handleRefresh());
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                icon: Icons.merge_type,
-                title: 'Merge Field Officer Data',
-                subtitle: 'Import and merge survey data from field officers',
-                color: Colors.orange,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const MergeFieldDataScreen(),
-                    ),
-                  ).then((_) => _handleRefresh());
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                icon: Icons.download,
-                title: 'Export Reports',
-                subtitle: 'Generate and download survey reports',
-                color: Colors.green,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ExportReportScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+                // Management Actions
+                const Text(
+                  'Data Management',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // --- FIXED SYNC CARD ---
+                _buildActionCard(
+                  icon: Icons.sync,
+                  title: 'Sync Data',
+                  subtitle: 'Download from Server & Upload Changes',
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SyncScreen(),
+                      ),
+                    ).then(
+                        (_) => _handleRefresh()); // Refresh stats after syncing
+                  },
+                ),
+                // -----------------------
+
+                _buildActionCard(
+                  icon: Icons.upload_file,
+                  title: 'Import Master Data',
+                  subtitle: 'Upload master CSV file with asset list',
+                  color: const Color(0xFF0C3B2E),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ImportMasterScreen(),
+                      ),
+                    ).then((_) => _handleRefresh());
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionCard(
+                  icon: Icons.merge_type,
+                  title: 'Merge Field Officer Data',
+                  subtitle: 'Import and merge survey data from field officers',
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MergeFieldDataScreen(),
+                      ),
+                    ).then((_) => _handleRefresh());
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionCard(
+                  icon: Icons.download,
+                  title: 'Export Reports',
+                  subtitle: 'Generate and download survey reports',
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ExportReportScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

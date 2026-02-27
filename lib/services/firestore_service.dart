@@ -10,6 +10,23 @@ class FirestoreService {
     return _db.collection('survey_$currentYear');
   }
 
+  // Hierarchical path: survey_YEAR/{mainRegion}/subRegions/{subRegion}/assets/{newCode}
+  DocumentReference<Map<String, dynamic>> _assetDocRef({
+    required String mainRegion,
+    required String subRegion,
+    required String newCode,
+  }) {
+    return _currentCollection
+        .doc(mainRegion)
+        .collection('subRegions')
+        .doc(subRegion)
+        .collection('assets')
+        .doc(newCode);
+  }
+
+  // Query across all 'assets' subcollections
+  Query<Map<String, dynamic>> get _assetsGroupQuery => _db.collectionGroup('assets');
+
   // --- 1. ADD NEW ITEM (Updated for Hierarchy) ---
   Future<void> addAsset({
     required String newCode,
@@ -26,7 +43,7 @@ class FirestoreService {
     required List<String> imagePaths,
     String? remarks,
   }) async {
-    final docRef = _currentCollection.doc(newCode);
+    final docRef = _assetDocRef(mainRegion: mainRegion, subRegion: subRegion, newCode: newCode);
 
     await docRef.set({
       'newCode': newCode,
@@ -62,11 +79,28 @@ class FirestoreService {
 
   // --- 2. CHECK IF ITEM EXISTS ---
   Future<DocumentSnapshot> getAsset(String code) async {
+    final snap = await _assetsGroupQuery.where('newCode', isEqualTo: code).limit(1).get();
+    if (snap.docs.isNotEmpty) {
+      return snap.docs.first;
+    }
+    // Fallback: flat collection (legacy)
     return await _currentCollection.doc(code).get();
   }
 
   // --- 3. UPDATE ASSET ---
   Future<void> updateAsset(String code, int quantity, String status, String remarks) async {
+    // Find by code in hierarchical structure
+    final snap = await _assetsGroupQuery.where('newCode', isEqualTo: code).limit(1).get();
+    if (snap.docs.isNotEmpty) {
+      await snap.docs.first.reference.update({
+        'physicalBalance': quantity,
+        'status': status,
+        'remarks': remarks,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+      return;
+    }
+    // Fallback to legacy flat doc
     await _currentCollection.doc(code).update({
       'physicalBalance': quantity,
       'status': status,
@@ -77,7 +111,9 @@ class FirestoreService {
 
   // --- 4. APPROVAL WORKFLOW ---
   Future<void> auditorApprove(String barcode) async {
-    await _currentCollection.doc(barcode).update({
+    final snap = await _assetsGroupQuery.where('newCode', isEqualTo: barcode).limit(1).get();
+    final ref = snap.docs.isNotEmpty ? snap.docs.first.reference : _currentCollection.doc(barcode);
+    await ref.update({
       'approvalLevel': 1,
       'approvalStatus': 'Verified by Auditor',
       'auditedAt': FieldValue.serverTimestamp(),
@@ -85,7 +121,9 @@ class FirestoreService {
   }
 
   Future<void> adminFinalApprove(String barcode) async {
-    await _currentCollection.doc(barcode).update({
+    final snap = await _assetsGroupQuery.where('newCode', isEqualTo: barcode).limit(1).get();
+    final ref = snap.docs.isNotEmpty ? snap.docs.first.reference : _currentCollection.doc(barcode);
+    await ref.update({
       'approvalLevel': 2,
       'approvalStatus': 'Approved',
       'approvedAt': FieldValue.serverTimestamp(),
@@ -94,14 +132,34 @@ class FirestoreService {
 
   // --- 5. DATA STREAMS ---
   Stream<QuerySnapshot> getAssetsStream() {
-    return _currentCollection.orderBy('lastUpdated', descending: true).snapshots();
+    // Uses collection group to stream all assets across regions
+    return _assetsGroupQuery.orderBy('lastUpdated', descending: true).snapshots();
   }
 
   Stream<QuerySnapshot> getPendingAuditStream() {
-    return _currentCollection.where('approvalLevel', isEqualTo: 0).snapshots();
+    return _assetsGroupQuery.where('approvalLevel', isEqualTo: 0).snapshots();
   }
 
   Stream<QuerySnapshot> getPendingAdminApprovalStream() {
-    return _currentCollection.where('approvalLevel', isEqualTo: 1).snapshots();
+    return _assetsGroupQuery.where('approvalLevel', isEqualTo: 1).snapshots();
+  }
+
+  // --- 6. MIGRATION: FLAT -> HIERARCHICAL ---
+  Future<void> migrateFlatToHierarchy({bool deleteSource = false}) async {
+    final flatDocs = await _currentCollection.get();
+    for (final d in flatDocs.docs) {
+      final data = d.data() as Map<String, dynamic>;
+      final code = data['newCode']?.toString();
+      final mainRegion = data['mainRegion']?.toString();
+      final subRegion = data['subRegion']?.toString();
+      if (code == null || mainRegion == null || subRegion == null) {
+        continue;
+      }
+      final dest = _assetDocRef(mainRegion: mainRegion, subRegion: subRegion, newCode: code);
+      await dest.set(data, SetOptions(merge: true));
+      if (deleteSource) {
+        await d.reference.delete();
+      }
+    }
   }
 }

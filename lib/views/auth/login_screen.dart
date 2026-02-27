@@ -79,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       } else {
         nextScreen = const DashboardScreen();
       }
-      
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => nextScreen),
       );
@@ -302,58 +302,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
-
-                    // Animated Demo Accounts Info
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Card(
-                        color: Colors.white.withOpacity(0.9),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.info_outline,
-                                      size: 20, color: Color(0xFFFFD700)),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Demo Accounts',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              _buildAccountInfo(
-                                'Admin',
-                                'admin / admin123',
-                                Icons.admin_panel_settings,
-                              ),
-                              const SizedBox(height: 8),
-                              _buildAccountInfo(
-                                'Field Officer',
-                                'officer01 - officer10 / field123',
-                                Icons.person,
-                              ),
-                              const SizedBox(height: 8),
-                              _buildAccountInfo(
-                                'Regional Officer',
-                                'regoff - 123',
-                                Icons.location_city,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -361,36 +309,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildAccountInfo(String role, String credentials, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                role,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              Text(
-                credentials,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

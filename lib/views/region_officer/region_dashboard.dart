@@ -60,132 +60,141 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
     final authState = ref.watch(authProvider);
     final dashboardState = ref.watch(dashboardProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Region Officer Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _handleRefresh,
-            tooltip: 'Refresh',
-          ),
-          PopupMenuButton<String>(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: Row(
-                  children: [
-                    const Icon(Icons.person, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(authState.currentUser?.displayName ?? 'Region Officer'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                child: const Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Logout'),
-                  ],
-                ),
-                onTap: () {
-                  Future.delayed(Duration.zero, _handleLogout);
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToScan,
-        backgroundColor: const Color(0xFF0C3B2E),
-        icon: const Icon(Icons.qr_code_scanner),
-        label: const Text('Scan'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Welcome Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _handleLogout();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Region Officer Dashboard'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _handleRefresh,
+              tooltip: 'Refresh',
+            ),
+            PopupMenuButton<String>(
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: const Color(0xFF0C3B2E),
-                            child: const Icon(
-                              Icons.location_city,
-                              size: 32,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Welcome, ${authState.currentUser?.displayName ?? 'Region Officer'}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'REGION OFFICER',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Regional Survey Overview',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[400],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      const Icon(Icons.person, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(authState.currentUser?.displayName ??
+                          'Region Officer'),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Statistics Overview
-              if (dashboardState.isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  child: const Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Logout'),
+                    ],
                   ),
-                )
-              else ...[
-                _buildStatsGrid(dashboardState.stats),
-                const SizedBox(height: 20),
-                _buildStatusBreakdown(dashboardState.stats),
-                const SizedBox(height: 20),
-                _buildQuickActions(),
+                  onTap: () {
+                    Future.delayed(Duration.zero, _handleLogout);
+                  },
+                ),
               ],
-            ],
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _navigateToScan,
+          backgroundColor: const Color(0xFF0C3B2E),
+          icon: const Icon(Icons.qr_code_scanner),
+          label: const Text('Scan'),
+        ),
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Welcome Card
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: const Color(0xFF0C3B2E),
+                              child: const Icon(
+                                Icons.location_city,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Welcome, ${authState.currentUser?.displayName ?? 'Region Officer'}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'REGION OFFICER',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Regional Survey Overview',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Statistics Overview
+                if (dashboardState.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else ...[
+                  _buildStatsGrid(dashboardState.stats),
+                  const SizedBox(height: 20),
+                  _buildStatusBreakdown(dashboardState.stats),
+                  const SizedBox(height: 20),
+                  _buildQuickActions(),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -229,7 +238,8 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),

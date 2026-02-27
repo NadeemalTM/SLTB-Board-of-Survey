@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import '../../data/models/asset_model.dart';
-import '../../data/database/database_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/survey_status.dart';
 
@@ -127,42 +127,90 @@ class _FieldOfficerVerificationScreenState
           physicalBalance < bookBalance ? bookBalance - physicalBalance : 0;
 
       final now = DateTime.now().toIso8601String();
+      final newCode = widget.asset.newCode;
 
-      // Update asset with verification
-      final updatedAsset = widget.asset.copyWith(
-        description: _descriptionController.text.trim(),
-        oldCode: _oldCodeController.text.trim(),
-        bookBalance: bookBalance,
-        physicalBalance: physicalBalance,
-        excess: excess,
-        shortage: shortage,
-        remarks: _remarksController.text.trim(),
-        surveyStatus: _selectedStatus,
-        imagePath1: _image1Path,
-        imagePath2: _image2Path,
-        imagePath3: _image3Path,
-        verifiedBy: username,
-        verifiedDate: now,
-        verificationStatus: verificationStatus,
-        lastUpdatedBy: username,
-        lastUpdatedDate: now,
-      );
+      // Build the update data for Firestore
+      final updateData = <String, dynamic>{
+        'description': _descriptionController.text.trim(),
+        'oldCode': _oldCodeController.text.trim(),
+        'bookBalance': bookBalance,
+        'physicalBalance': physicalBalance,
+        'excess': excess,
+        'shortage': shortage,
+        'remarks': _remarksController.text.trim(),
+        'status': _selectedStatus,
+        'verifiedBy': username,
+        'verifiedDate': now,
+        'verificationStatus': verificationStatus,
+        'lastUpdatedBy': username,
+        'lastUpdatedDate': now,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      };
 
-      // Save to database
-      final db = DatabaseHelper.instance;
-      await db.updateAsset(updatedAsset);
+      // Update approval level if verified
+      if (verificationStatus == 'verified') {
+        updateData['approvalLevel'] = 1;
+        updateData['approvalStatus'] = 'Verified by Field Officer';
+      }
+
+      // Find and update the document in Firestore
+      final firestore = FirebaseFirestore.instance;
+      bool updated = false;
+
+      // 1. Try hierarchical: collectionGroup('assets')
+      try {
+        final snap = await firestore
+            .collectionGroup('assets')
+            .where('newCode', isEqualTo: newCode)
+            .limit(1)
+            .get();
+        if (snap.docs.isNotEmpty) {
+          await snap.docs.first.reference.update(updateData);
+          updated = true;
+        }
+      } catch (e) {
+        print('[Verification] CollectionGroup update failed: $e');
+      }
+
+      // 2. Try flat collection: survey_YEAR/{docId}
+      if (!updated) {
+        try {
+          final currentYear = DateTime.now().year.toString();
+          final collectionName = 'survey_$currentYear';
+          final snap = await firestore
+              .collection(collectionName)
+              .where('newCode', isEqualTo: newCode)
+              .limit(1)
+              .get();
+          if (snap.docs.isNotEmpty) {
+            await snap.docs.first.reference.update(updateData);
+            updated = true;
+          }
+        } catch (e) {
+          print('[Verification] Flat collection update failed: $e');
+        }
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              verificationStatus == 'verified'
-                  ? 'Asset verified successfully'
-                  : 'Asset updated and marked for correction',
+        if (updated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                verificationStatus == 'verified'
+                    ? 'Asset verified successfully'
+                    : 'Asset updated and marked for correction',
+              ),
+              backgroundColor: Colors.green,
             ),
-            backgroundColor: Colors.green,
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not find asset in Firebase'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -316,8 +364,7 @@ class _FieldOfficerVerificationScreenState
                 maxLines: 2,
                 enabled: _isEditing,
                 validator: (value) {
-                  if (_isEditing &&
-                      (value == null || value.trim().isEmpty)) {
+                  if (_isEditing && (value == null || value.trim().isEmpty)) {
                     return 'Please enter description';
                   }
                   return null;

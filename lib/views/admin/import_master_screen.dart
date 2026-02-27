@@ -100,8 +100,9 @@ class _ImportMasterScreenState extends State<ImportMasterScreen> {
 
         int bookBalance = 0;
         var balanceRaw = row[5];
-        if (balanceRaw is int) bookBalance = balanceRaw;
-        else if (balanceRaw is double) bookBalance = balanceRaw.toInt();
+        if (balanceRaw is int) {
+          bookBalance = balanceRaw;
+        } else if (balanceRaw is double) bookBalance = balanceRaw.toInt();
         else if (balanceRaw is String) bookBalance = int.tryParse(balanceRaw) ?? 0;
 
         await firestore.addAsset(

@@ -9,7 +9,7 @@ import '../../providers/auth_provider.dart'; // <--- IMPORT AUTH PROVIDER
 
 class AddItemScreen extends ConsumerStatefulWidget {
   final String? scannedCode;
-  const AddItemScreen({Key? key, this.scannedCode}) : super(key: key);
+  const AddItemScreen({super.key, this.scannedCode});
 
   @override
   ConsumerState<AddItemScreen> createState() => _AddItemScreenState();
@@ -17,27 +17,30 @@ class AddItemScreen extends ConsumerStatefulWidget {
 
 class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _newCodeController;
   final TextEditingController _oldCodeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _bookBalanceController = TextEditingController(text: '0');
-  final TextEditingController _physicalBalanceController = TextEditingController(text: '1');
-  
+  final TextEditingController _bookBalanceController =
+      TextEditingController(text: '0');
+  final TextEditingController _physicalBalanceController =
+      TextEditingController(text: '1');
+
   String _selectedStatus = SurveyStatus.good;
-  
+
   // Dropdown Variables
   String _selectedMainRegion = "";
   String _selectedSubRegion = "";
 
-  List<String?> _images = [null, null, null];
+  final List<String?> _images = [null, null, null];
   final ImagePicker _picker = ImagePicker();
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    String initialCode = widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
+    String initialCode =
+        widget.scannedCode ?? 'NEW-${DateTime.now().millisecondsSinceEpoch}';
     _newCodeController = TextEditingController(text: initialCode);
 
     // --- AUTO-FILL LOGIC ---
@@ -45,16 +48,21 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     final authState = ref.read(authProvider);
     final user = authState.user;
 
-    // If user exists and IS NOT an Admin, pre-fill and lock the region
+    // If user exists and IS NOT an Admin, pre-fill the main region
+    // Sub-region is left for manual selection unless the user has one assigned
     if (user != null && !user.isAdmin) {
       _selectedMainRegion = user.mainRegion;
-      _selectedSubRegion = user.subRegion;
+      // Only pre-fill sub-region if the user has one in their profile
+      if (user.subRegion.isNotEmpty) {
+        _selectedSubRegion = user.subRegion;
+      }
     }
   }
 
   Future<void> _pickImage(int index) async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 40);
+      final XFile? image =
+          await _picker.pickImage(source: ImageSource.camera, imageQuality: 40);
       if (image != null) {
         setState(() => _images[index] = image.path);
       }
@@ -69,7 +77,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     // Validate Region (Even if locked, these variables must be set)
     if (_selectedMainRegion.isEmpty || _selectedSubRegion.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Region Configuration Error. Contact Admin.')),
+        const SnackBar(
+            content: Text('Region Configuration Error. Contact Admin.')),
       );
       return;
     }
@@ -78,7 +87,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
     try {
       final firestore = FirestoreService();
-      List<String> validImages = _images.where((path) => path != null).cast<String>().toList();
+      List<String> validImages =
+          _images.where((path) => path != null).cast<String>().toList();
 
       await firestore.addAsset(
         newCode: _newCodeController.text,
@@ -94,15 +104,16 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Asset Saved to Cloud!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Asset Saved to Cloud!'),
+              backgroundColor: Colors.green),
         );
-        Navigator.pop(context); 
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
-        );
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -177,58 +188,35 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                         validator: (val) => val!.isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 16),
-                      
-                      // --- CONDITIONAL REGION UI ---
-                      if (isOfficer) 
-                        // OPTION A: LOCKED VIEW (For Officers)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[400]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "ASSIGNED REGION",
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "$_selectedMainRegion - $_selectedSubRegion",
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              const Row(
-                                children: [
-                                  Icon(Icons.lock, size: 14, color: Colors.blueGrey),
-                                  SizedBox(width: 4),
-                                  Text("Automatically set by your login", style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
-                                ],
-                              )
-                            ],
-                          ),
-                        )
-                      else
-                        // OPTION B: DROPDOWN (For Admins)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: RegionSelector(
-                            onSelectionChanged: (main, sub) {
-                              setState(() {
-                                _selectedMainRegion = main;
-                                _selectedSubRegion = sub;
-                              });
-                            },
-                          ),
+
+                      // --- REGION SELECTOR ---
+                      // Officers: main region is locked, sub-region is selectable
+                      // Admins: both are fully selectable
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: RegionSelector(
+                          lockedMainRegion:
+                              isOfficer && _selectedMainRegion.isNotEmpty
+                                  ? _selectedMainRegion
+                                  : null,
+                          initialMainRegion: _selectedMainRegion.isNotEmpty
+                              ? _selectedMainRegion
+                              : null,
+                          initialSubRegion: _selectedSubRegion.isNotEmpty
+                              ? _selectedSubRegion
+                              : null,
+                          onSelectionChanged: (main, sub) {
+                            setState(() {
+                              _selectedMainRegion = main;
+                              _selectedSubRegion = sub;
+                            });
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -238,7 +226,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               // ... (Audit Data and Photos sections remain exactly the same) ...
               // Copy the rest of your UI code here (Audit Data, Photos, Save Button)
               // to keep the file complete.
-              
+
               // AUDIT DATA
               _buildSectionHeader("Audit Data"),
               Card(
@@ -268,14 +256,15 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                                 labelText: 'Physical Bal. *',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (val) => val!.isEmpty ? 'Required' : null,
+                              validator: (val) =>
+                                  val!.isEmpty ? 'Required' : null,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedStatus,
+                        initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           labelText: 'Condition',
                           border: OutlineInputBorder(),
@@ -286,8 +275,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                           SurveyStatus.broken,
                           SurveyStatus.missing,
                           'To be Disposed',
-                        ].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
-                        onChanged: (val) => setState(() => _selectedStatus = val!),
+                        ]
+                            .map((s) => DropdownMenuItem(
+                                value: s, child: Text(s.toUpperCase())))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedStatus = val!),
                       ),
                     ],
                   ),
@@ -317,12 +310,17 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                     backgroundColor: const Color(0xFF0C3B2E),
                     foregroundColor: Colors.white,
                   ),
-                  icon: _isSaving 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                    : const Icon(Icons.cloud_upload),
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.cloud_upload),
                   label: Text(
                     _isSaving ? "SAVING..." : "SAVE ASSET",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -340,8 +338,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
-          fontSize: 14, 
-          fontWeight: FontWeight.bold, 
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
           color: Colors.grey[700],
         ),
       ),
@@ -371,7 +369,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                 children: [
                   Icon(Icons.camera_alt, color: Colors.grey[600]),
                   const SizedBox(height: 4),
-                  Text("Photo ${index + 1}", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  Text("Photo ${index + 1}",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                 ],
               )
             : null,

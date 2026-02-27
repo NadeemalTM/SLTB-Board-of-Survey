@@ -1,5 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/database/database_helper.dart';
 
 /// Dashboard statistics
 class DashboardStats {
@@ -70,26 +70,88 @@ class DashboardState {
   }
 }
 
-/// Dashboard notifier
+/// Dashboard notifier — reads from Firebase Firestore
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  final DatabaseHelper _db = DatabaseHelper.instance;
-  
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   DashboardNotifier() : super(const DashboardState());
 
-  /// Load dashboard statistics
+  /// Get current year collection name (e.g., 'survey_2026')
+  String get _currentCollectionName {
+    final String currentYear = DateTime.now().year.toString();
+    return 'survey_$currentYear';
+  }
+
+  /// Load dashboard statistics from Firestore
   Future<void> loadStats() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Fetch all statistics
-      final totalItems = await _db.getTotalCount();
-      final surveyedItems = await _db.getSurveyedCount();
-      final pendingItems = totalItems - surveyedItems;
-      final statusCounts = await _db.getCountByStatus();
-      final newItems = await _db.getNewItemsCount();
+      // Collect all asset documents from BOTH structures
+      List<Map<String, dynamic>> allDocs = [];
 
-      // Calculate completion percentage
-      final completionPercentage =
+      // 1. Try flat collection: survey_YEAR/{docId}
+      try {
+        final flatSnapshot =
+            await _firestore.collection(_currentCollectionName).get();
+        for (final doc in flatSnapshot.docs) {
+          allDocs.add(doc.data());
+        }
+        print(
+            '[Dashboard] Flat collection "$_currentCollectionName": ${flatSnapshot.docs.length} docs');
+      } catch (e) {
+        print('[Dashboard] Flat collection query failed: $e');
+      }
+
+      // 2. Try hierarchical: collectionGroup('assets')
+      try {
+        final hierarchicalSnapshot =
+            await _firestore.collectionGroup('assets').get();
+        for (final doc in hierarchicalSnapshot.docs) {
+          allDocs.add(doc.data());
+        }
+        print(
+            '[Dashboard] CollectionGroup "assets": ${hierarchicalSnapshot.docs.length} docs');
+      } catch (e) {
+        print('[Dashboard] CollectionGroup query failed: $e');
+      }
+
+      print('[Dashboard] Total documents found: ${allDocs.length}');
+
+      final int totalItems = allDocs.length;
+
+      // Count surveyed and status breakdown
+      int surveyedItems = 0;
+      int newItems = 0;
+      Map<String, int> statusCounts = {};
+
+      for (final data in allDocs) {
+        // Count verified items (approvalLevel >= 1)
+        final approvalLevel = data['approvalLevel'] ?? 0;
+        if (approvalLevel is int && approvalLevel >= 1) {
+          surveyedItems++;
+        }
+
+        // Count new items
+        final isNew = data['isNew'];
+        if (isNew == true) {
+          newItems++;
+        }
+
+        // Count by status (Good, Broken, Repairable, To be Disposed, New Found)
+        final status = data['status']?.toString();
+        if (status != null && status.isNotEmpty) {
+          statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+        }
+      }
+
+      // Log what we found for debugging
+      print(
+          '[Dashboard] Stats -> Total: $totalItems, Verified: $surveyedItems, New: $newItems');
+      print('[Dashboard] Status counts: $statusCounts');
+
+      final int pendingItems = totalItems - surveyedItems;
+      final double completionPercentage =
           totalItems > 0 ? (surveyedItems / totalItems) * 100 : 0.0;
 
       final stats = DashboardStats(
@@ -103,6 +165,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
 
       state = state.copyWith(stats: stats, isLoading: false);
     } catch (e) {
+      print('[Dashboard] ERROR: $e');
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to load statistics: $e',

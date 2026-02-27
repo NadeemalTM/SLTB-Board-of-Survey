@@ -178,6 +178,7 @@ class _RegionAssetEntryScreenState
 
       // Upload photos to Firebase Storage
       List<String?> photoUrls = [null, null, null];
+      bool photosUploaded = false;
       try {
         final storageService = StorageService();
         photoUrls = await storageService.uploadAllPhotos(
@@ -186,6 +187,7 @@ class _RegionAssetEntryScreenState
           image2Path: _image2Path,
           image3Path: _image3Path,
         );
+        photosUploaded = photoUrls.any((url) => url != null);
       } catch (e) {
         print('[RegionEntry] Photo upload failed: $e');
       }
@@ -202,11 +204,13 @@ class _RegionAssetEntryScreenState
       bool synced = await HttpSyncService().saveAsset(assetToSave);
 
       if (mounted) {
+        String msg = widget.asset != null ? 'Asset updated' : 'Asset saved';
+        if (synced) msg += ' & synced to MySQL';
+        if (photosUploaded) msg += ' • Photos uploaded ☁️';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.asset != null
-                ? 'Asset updated${synced ? ' & synced to MySQL' : ' (local only)'}'
-                : 'Asset saved${synced ? ' & synced to MySQL' : ' (local only)'}'),
+            content: Text(msg),
             backgroundColor: synced ? Colors.green : Colors.orange,
           ),
         );

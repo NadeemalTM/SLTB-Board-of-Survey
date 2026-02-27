@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Removed unused imports
-import '../../services/firestore_service.dart'; // <--- USING FIREBASE NOW
 // Removed unused SurveyStatus import
 
 class AddItemScreen extends ConsumerStatefulWidget {
@@ -40,8 +39,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
     try {
       // --- NEW FIREBASE LOGIC ---
-      // We are calling FirestoreService, NOT ApiService
-      final firestore = FirestoreService();
+      // Firebase saving is handled in add_item_screen.dart
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

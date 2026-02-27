@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/asset_model.dart';
-import '../../providers/auth_provider.dart';
 import 'field_verification_screen.dart';
 import 'widgets/asset_list_item.dart';
 
@@ -92,7 +91,6 @@ class _PendingVerificationListScreenState
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pending Verification'),

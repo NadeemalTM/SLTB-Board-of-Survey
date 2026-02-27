@@ -85,7 +85,7 @@ class FirestoreService {
 
     // Add photo download URLs if available
     if (photoUrls != null && photoUrls.isNotEmpty) {
-      if (photoUrls.length > 0) data['photoUrl1'] = photoUrls[0];
+      if (photoUrls.isNotEmpty) data['photoUrl1'] = photoUrls[0];
       if (photoUrls.length > 1) data['photoUrl2'] = photoUrls[1];
       if (photoUrls.length > 2) data['photoUrl3'] = photoUrls[2];
       data['photoUrls'] = photoUrls;

@@ -240,8 +240,9 @@ class _VerifiedItemsScreenState extends State<VerifiedItemsScreen> {
   }
 
   Widget _buildThumbnail(AssetModel asset) {
-    // Try to get the first available image
-    final imagePath = asset.imagePath1 ?? asset.imagePath2 ?? asset.imagePath3;
+    // Prefer cloud URL (works across devices), fallback to local path
+    final cloudUrl = asset.photoUrl1 ?? asset.photoUrl2 ?? asset.photoUrl3;
+    final localPath = asset.imagePath1 ?? asset.imagePath2 ?? asset.imagePath3;
 
     return Container(
       width: 56,
@@ -253,17 +254,50 @@ class _VerifiedItemsScreenState extends State<VerifiedItemsScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(7),
-        child: imagePath != null && imagePath.isNotEmpty
-            ? Image.file(
-                File(imagePath),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildPlaceholderIcon();
-                },
-              )
-            : _buildPlaceholderIcon(),
+        child: _buildImageWidget(cloudUrl, localPath),
       ),
     );
+  }
+
+  Widget _buildImageWidget(String? cloudUrl, String? localPath) {
+    // Try cloud URL first
+    if (cloudUrl != null && cloudUrl.startsWith('http')) {
+      return Image.network(
+        cloudUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to local file if network fails
+          if (localPath != null &&
+              localPath.isNotEmpty &&
+              !localPath.startsWith('http')) {
+            return Image.file(
+              File(localPath),
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
+            );
+          }
+          return _buildPlaceholderIcon();
+        },
+      );
+    }
+
+    // Try local path
+    if (localPath != null && localPath.isNotEmpty) {
+      if (localPath.startsWith('http')) {
+        return Image.network(
+          localPath,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
+        );
+      }
+      return Image.file(
+        File(localPath),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
+      );
+    }
+
+    return _buildPlaceholderIcon();
   }
 
   Widget _buildPlaceholderIcon() {

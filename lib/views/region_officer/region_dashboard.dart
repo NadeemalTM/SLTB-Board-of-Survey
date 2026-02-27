@@ -5,6 +5,7 @@ import '../../providers/dashboard_provider.dart';
 import '../auth/login_screen.dart';
 import 'region_scan_screen.dart';
 import 'region_asset_entry_screen.dart';
+import '../scan/asset_search_screen.dart';
 
 /// Region Officer Dashboard - Main screen for regional oversight
 class RegionDashboard extends ConsumerStatefulWidget {
@@ -71,6 +72,18 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
         appBar: AppBar(
           title: const Text('Region Officer Dashboard'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AssetSearchScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+              tooltip: 'Search Assets',
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _handleRefresh,

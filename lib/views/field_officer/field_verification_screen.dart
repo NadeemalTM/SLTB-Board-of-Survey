@@ -6,6 +6,7 @@ import 'dart:io';
 import '../../data/models/asset_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/survey_status.dart';
+import '../../services/storage_service.dart';
 
 /// Field Officer Verification Screen
 /// Used by field officers to verify data entered by regional officers
@@ -129,6 +130,22 @@ class _FieldOfficerVerificationScreenState
       final now = DateTime.now().toIso8601String();
       final newCode = widget.asset.newCode;
 
+      // Upload photos to Firebase Storage
+      List<String?> photoUrls = [null, null, null];
+      if (_image1Path != null || _image2Path != null || _image3Path != null) {
+        try {
+          final storageService = StorageService();
+          photoUrls = await storageService.uploadAllPhotos(
+            assetCode: newCode,
+            image1Path: _image1Path,
+            image2Path: _image2Path,
+            image3Path: _image3Path,
+          );
+        } catch (e) {
+          print('[Verification] Photo upload failed: $e');
+        }
+      }
+
       // Build the update data for Firestore
       final updateData = <String, dynamic>{
         'description': _descriptionController.text.trim(),
@@ -146,6 +163,16 @@ class _FieldOfficerVerificationScreenState
         'lastUpdatedDate': now,
         'lastUpdated': FieldValue.serverTimestamp(),
       };
+
+      // Add photo URLs if uploaded successfully
+      if (photoUrls[0] != null) updateData['photoUrl1'] = photoUrls[0];
+      if (photoUrls[1] != null) updateData['photoUrl2'] = photoUrls[1];
+      if (photoUrls[2] != null) updateData['photoUrl3'] = photoUrls[2];
+
+      // Store local paths too
+      if (_image1Path != null) updateData['imagePath1'] = _image1Path;
+      if (_image2Path != null) updateData['imagePath2'] = _image2Path;
+      if (_image3Path != null) updateData['imagePath3'] = _image3Path;
 
       // Update approval level if verified
       if (verificationStatus == 'verified') {

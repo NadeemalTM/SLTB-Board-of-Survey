@@ -7,6 +7,7 @@ import '../scan/scan_screen.dart';
 import '../scan/add_item_screen.dart';
 import '../auth/login_screen.dart';
 import 'verified_items_screen.dart';
+import '../scan/asset_search_screen.dart';
 
 /// Field Officer Dashboard - mirrored to Region Officer dashboard style
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -73,6 +74,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         appBar: AppBar(
           title: const Text('Field Officer Dashboard'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AssetSearchScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+              tooltip: 'Search Assets',
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _handleRefresh,
@@ -355,6 +368,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => const PendingVerificationListScreen(),
+                  ),
+                ).then((_) => _handleRefresh());
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF0C3B2E),
+                child: Icon(Icons.search, color: Colors.white),
+              ),
+              title: const Text('Search Assets'),
+              subtitle: const Text('Find assets by barcode or description'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AssetSearchScreen(),
                   ),
                 ).then((_) => _handleRefresh());
               },

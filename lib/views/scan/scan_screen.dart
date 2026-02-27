@@ -3,10 +3,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'field_verification_screen.dart'; // REMOVED (Old)
 import '../../services/firestore_service.dart';
-import 'edit_asset_screen.dart'; // <--- ADDED
-import 'add_item_screen.dart'; // <--- ADDED
+import 'edit_asset_screen.dart';
+import 'add_item_screen.dart';
 
 /// Barcode Scanner Screen - Scan equipment barcodes for verification
 class ScanScreen extends StatefulWidget {
@@ -18,13 +17,27 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   MobileScannerController cameraController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    detectionTimeoutMs: 250,
+    detectionSpeed: DetectionSpeed.unrestricted,
+    detectionTimeoutMs: 100,
+    facing: CameraFacing.back,
+    formats: [
+      BarcodeFormat.code128,
+      BarcodeFormat.code39,
+      BarcodeFormat.code93,
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.upcA,
+      BarcodeFormat.upcE,
+      BarcodeFormat.qrCode,
+      BarcodeFormat.codabar,
+      BarcodeFormat.itf,
+      BarcodeFormat.dataMatrix,
+      BarcodeFormat.pdf417,
+    ],
   );
   bool _isProcessing = false;
   bool _hasPermission = true;
   final TextEditingController _manualCodeController = TextEditingController();
-  // Optionally add more toggles if needed (e.g., format filters)
 
   @override
   void initState() {
@@ -59,17 +72,14 @@ class _ScanScreenState extends State<ScanScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Pause camera to reduce background processing/log spam while navigating
       await cameraController.stop();
       final firestore = FirestoreService();
 
-      // Check Firebase
       final doc = await firestore.getAsset(code);
 
       if (!mounted) return;
 
       if (doc.exists) {
-        // --- CASE A: ITEM FOUND (VERIFY) ---
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
         Navigator.push(
@@ -77,11 +87,9 @@ class _ScanScreenState extends State<ScanScreen> {
                 MaterialPageRoute(
                     builder: (_) => EditAssetScreen(data: data, docId: code)))
             .then((_) {
-          // Resume camera when returning to scan screen
           cameraController.start();
         });
       } else {
-        // --- CASE B: NEW ITEM (ADD) ---
         Navigator.push(
             context,
             MaterialPageRoute(
@@ -137,15 +145,10 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _scanFromGallery() async {
-    // Pick an image from gallery and analyze it
     try {
-      // Lazy import to avoid web issues
-      // ignore: avoid_dynamic_calls
       final picker = await Future.sync(() => ImagePicker());
       final image = await picker.pickImage(source: ImageSource.gallery);
       if (image == null) return;
-      // In this mobile_scanner version, analyzeImage triggers onDetect
-      // if a barcode is found; we don't receive a capture here.
       await cameraController.analyzeImage(image.path);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -190,31 +193,42 @@ class _ScanScreenState extends State<ScanScreen> {
       ),
       body: !_hasPermission
           ? const Center(child: Text('Camera permission not granted'))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                // Define a central scan window to improve detection stability
-                final Rect scanWindow = Rect.fromCenter(
-                  center:
-                      Offset(constraints.maxWidth / 2, constraints.maxHeight / 2),
-                  width: constraints.maxWidth * 0.8,
-                  height: constraints.maxHeight * 0.28,
-                );
-                return Stack(
-                  children: [
-                    MobileScanner(
-                      controller: cameraController,
-                      scanWindow: scanWindow,
-                      onDetect: (capture) {
-                        final List<Barcode> barcodes = capture.barcodes;
-                        if (barcodes.isNotEmpty && !_isProcessing) {
-                          final code = barcodes.first.rawValue;
-                          if (code != null && code.isNotEmpty) {
-                            _handleBarcode(code);
-                          }
-                        }
+          : Stack(
+              children: [
+                // Full-screen camera — NO scanWindow restriction for maximum detection
+                MobileScanner(
+                  controller: cameraController,
+                  onDetect: (capture) {
+                    final List<Barcode> barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty && !_isProcessing) {
+                      final code = barcodes.first.rawValue;
+                      if (code != null && code.isNotEmpty) {
+                        _handleBarcode(code);
+                      }
+                    }
+                  },
+                ),
+
+                // Visual guide overlay (not a detection constraint)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final guideRect = Rect.fromCenter(
+                          center: Offset(constraints.maxWidth / 2,
+                              constraints.maxHeight / 2),
+                          width: constraints.maxWidth * 0.85,
+                          height: constraints.maxHeight * 0.15,
+                        );
+                        return CustomPaint(
+                          painter: _ScanGuidePainter(guideRect: guideRect),
+                        );
                       },
                     ),
-                // Overlay Text
+                  ),
+                ),
+
+                // Instructions
                 Positioned(
                   top: 24,
                   left: 16,
@@ -226,19 +240,14 @@ class _ScanScreenState extends State<ScanScreen> {
                       decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(24)),
-                      child: const Text('Point camera at barcode',
-                          style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        'Point camera at barcode',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
                     ),
                   ),
                 ),
-                // Scan window overlay mask
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _ScanWindowPainter(scanWindow: scanWindow),
-                    ),
-                  ),
-                ),
+
                 // Manual Entry Button
                 Positioned(
                   bottom: 40,
@@ -255,46 +264,81 @@ class _ScanScreenState extends State<ScanScreen> {
                     ),
                   ),
                 ),
+
                 // Loading Spinner
                 if (_isProcessing)
                   Container(
                     color: Colors.black54,
                     child: const Center(child: CircularProgressIndicator()),
                   ),
-                  ],
-                );
-              },
+              ],
             ),
     );
   }
 }
 
-class _ScanWindowPainter extends CustomPainter {
-  final Rect scanWindow;
-  _ScanWindowPainter({required this.scanWindow});
+/// Visual guide painter — shows a horizontal bar where the user should
+/// align the barcode. This is only a UI hint, NOT a detection constraint.
+class _ScanGuidePainter extends CustomPainter {
+  final Rect guideRect;
+  _ScanGuidePainter({required this.guideRect});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black54;
+    // Semi-transparent overlay
+    final overlay = Paint()..color = Colors.black.withOpacity(0.4);
+    final fullRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final cutout = RRect.fromRectXY(guideRect, 12, 12);
+
     final path = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRRect(RRect.fromRectXY(scanWindow, 16, 16));
-    // Create a cutout effect
+      ..addRect(fullRect)
+      ..addRRect(cutout);
     canvas.drawPath(
-      Path.combine(PathOperation.difference, path, Path()..addRRect(RRect.fromRectXY(scanWindow, 16, 16))),
-      paint,
+      Path.combine(PathOperation.difference, path, Path()..addRRect(cutout)),
+      overlay,
     );
 
-    // Add white borders around the scan window
+    // White border
     final border = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
-    canvas.drawRRect(RRect.fromRectXY(scanWindow, 16, 16), border);
+    canvas.drawRRect(cutout, border);
+
+    // Green corner accents for a professional look
+    final accent = Paint()
+      ..color = const Color(0xFF4CAF50)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    const cornerLen = 24.0;
+    final r = guideRect;
+
+    // Top-left
+    canvas.drawLine(Offset(r.left, r.top + 12),
+        Offset(r.left, r.top + 12 + cornerLen), accent);
+    canvas.drawLine(Offset(r.left + 12, r.top),
+        Offset(r.left + 12 + cornerLen, r.top), accent);
+    // Top-right
+    canvas.drawLine(Offset(r.right, r.top + 12),
+        Offset(r.right, r.top + 12 + cornerLen), accent);
+    canvas.drawLine(Offset(r.right - 12, r.top),
+        Offset(r.right - 12 - cornerLen, r.top), accent);
+    // Bottom-left
+    canvas.drawLine(Offset(r.left, r.bottom - 12),
+        Offset(r.left, r.bottom - 12 - cornerLen), accent);
+    canvas.drawLine(Offset(r.left + 12, r.bottom),
+        Offset(r.left + 12 + cornerLen, r.bottom), accent);
+    // Bottom-right
+    canvas.drawLine(Offset(r.right, r.bottom - 12),
+        Offset(r.right, r.bottom - 12 - cornerLen), accent);
+    canvas.drawLine(Offset(r.right - 12, r.bottom),
+        Offset(r.right - 12 - cornerLen, r.bottom), accent);
   }
 
   @override
-  bool shouldRepaint(covariant _ScanWindowPainter oldDelegate) {
-    return oldDelegate.scanWindow != scanWindow;
+  bool shouldRepaint(covariant _ScanGuidePainter oldDelegate) {
+    return oldDelegate.guideRect != guideRect;
   }
 }

@@ -72,6 +72,11 @@ class AssetModel {
   /// Flag: 0 = existing item from master, 1 = new item added during survey
   final int isNewItem;
 
+  /// Firebase Storage download URLs for photos (cloud backup)
+  final String? photoUrl1;
+  final String? photoUrl2;
+  final String? photoUrl3;
+
   AssetModel({
     this.id,
     this.serialNo,
@@ -95,6 +100,9 @@ class AssetModel {
     this.lastUpdatedBy,
     this.lastUpdatedDate,
     this.isNewItem = 0,
+    this.photoUrl1,
+    this.photoUrl2,
+    this.photoUrl3,
   });
 
   // ==================== Factory Constructors ====================
@@ -148,6 +156,13 @@ class AssetModel {
       lastUpdatedBy: data['lastUpdatedBy'] as String?,
       lastUpdatedDate: data['lastUpdatedDate'] as String?,
       isNewItem: (data['isNew'] == true) ? 1 : 0,
+      photoUrl1: data['photoUrl1'] as String?,
+      photoUrl2: data['photoUrl2'] as String?,
+      photoUrl3: data['photoUrl3'] as String?,
+      // If no local imagePaths, use photo URLs as image paths
+      imagePath1: data['imagePath1'] as String? ?? data['photoUrl1'] as String?,
+      imagePath2: data['imagePath2'] as String? ?? data['photoUrl2'] as String?,
+      imagePath3: data['imagePath3'] as String? ?? data['photoUrl3'] as String?,
     );
   }
 
@@ -241,6 +256,9 @@ class AssetModel {
     String? lastUpdatedBy,
     String? lastUpdatedDate,
     int? isNewItem,
+    String? photoUrl1,
+    String? photoUrl2,
+    String? photoUrl3,
   }) {
     return AssetModel(
       id: id ?? this.id,
@@ -265,6 +283,9 @@ class AssetModel {
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
       lastUpdatedDate: lastUpdatedDate ?? this.lastUpdatedDate,
       isNewItem: isNewItem ?? this.isNewItem,
+      photoUrl1: photoUrl1 ?? this.photoUrl1,
+      photoUrl2: photoUrl2 ?? this.photoUrl2,
+      photoUrl3: photoUrl3 ?? this.photoUrl3,
     );
   }
 
@@ -292,9 +313,24 @@ class AssetModel {
     return lastUpdatedBy != null && lastUpdatedBy!.isNotEmpty;
   }
 
-  /// Check if asset has images attached
+  /// Check if asset has images attached (local or cloud)
   bool get hasImages {
-    return imagePath1 != null || imagePath2 != null || imagePath3 != null;
+    return imagePath1 != null ||
+        imagePath2 != null ||
+        imagePath3 != null ||
+        photoUrl1 != null ||
+        photoUrl2 != null ||
+        photoUrl3 != null;
+  }
+
+  /// Get the best available image URL (prefers cloud URL, falls back to local path)
+  String? get bestImageUrl {
+    return photoUrl1 ??
+        photoUrl2 ??
+        photoUrl3 ??
+        imagePath1 ??
+        imagePath2 ??
+        imagePath3;
   }
 
   /// Get count of attached images

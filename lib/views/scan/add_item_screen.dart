@@ -5,7 +5,8 @@ import 'dart:io';
 import '../../services/firestore_service.dart';
 import '../../core/constants/survey_status.dart';
 import '../../widgets/region_selector.dart';
-import '../../providers/auth_provider.dart'; // <--- IMPORT AUTH PROVIDER
+import '../../providers/auth_provider.dart';
+import '../../services/storage_service.dart';
 
 class AddItemScreen extends ConsumerStatefulWidget {
   final String? scannedCode;
@@ -90,6 +91,24 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       List<String> validImages =
           _images.where((path) => path != null).cast<String>().toList();
 
+      // Upload photos to Firebase Storage
+      List<String?> photoUrls = [null, null, null];
+      try {
+        final storageService = StorageService();
+        photoUrls = await storageService.uploadAllPhotos(
+          assetCode: _newCodeController.text,
+          image1Path: _images[0],
+          image2Path: _images[1],
+          image3Path: _images[2],
+        );
+      } catch (e) {
+        print('[AddItem] Photo upload failed: $e');
+      }
+
+      // Filter valid download URLs
+      final List<String> photoDownloadUrls =
+          photoUrls.where((url) => url != null).cast<String>().toList();
+
       await firestore.addAsset(
         newCode: _newCodeController.text,
         oldCode: _oldCodeController.text,
@@ -100,6 +119,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
         physicalBalance: int.parse(_physicalBalanceController.text),
         status: _selectedStatus,
         imagePaths: validImages,
+        photoUrls: photoDownloadUrls,
       );
 
       if (mounted) {

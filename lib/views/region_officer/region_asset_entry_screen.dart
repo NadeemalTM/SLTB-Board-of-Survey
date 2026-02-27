@@ -7,6 +7,7 @@ import '../../data/database/database_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/survey_status.dart';
 import '../../services/http_sync_service.dart';
+import '../../services/storage_service.dart';
 
 /// Regional Officer Asset Entry Screen
 /// Used to enter complete asset details including physical count, status, photos
@@ -175,6 +176,20 @@ class _RegionAssetEntryScreenState
         );
       }
 
+      // Upload photos to Firebase Storage
+      List<String?> photoUrls = [null, null, null];
+      try {
+        final storageService = StorageService();
+        photoUrls = await storageService.uploadAllPhotos(
+          assetCode: widget.scannedCode,
+          image1Path: _image1Path,
+          image2Path: _image2Path,
+          image3Path: _image3Path,
+        );
+      } catch (e) {
+        print('[RegionEntry] Photo upload failed: $e');
+      }
+
       // Save to local database
       final db = DatabaseHelper.instance;
       if (widget.asset != null) {
@@ -266,8 +281,7 @@ class _RegionAssetEntryScreenState
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.qr_code_2,
-                              color: Color(0xFF0C3B2E)),
+                          const Icon(Icons.qr_code_2, color: Color(0xFF0C3B2E)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -304,7 +318,8 @@ class _RegionAssetEntryScreenState
                             Expanded(
                               child: Text(
                                 'New asset - Enter all details',
-                                style: TextStyle(fontSize: 13, color: Colors.black87),
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.black87),
                               ),
                             ),
                           ],
@@ -404,13 +419,17 @@ class _RegionAssetEntryScreenState
                     _buildCalculationRow(
                       'Excess',
                       excess.toString(),
-                      excess > 0 ? Colors.green : const Color.fromARGB(255, 0, 0, 0),
+                      excess > 0
+                          ? Colors.green
+                          : const Color.fromARGB(255, 0, 0, 0),
                     ),
                     const SizedBox(height: 8),
                     _buildCalculationRow(
                       'Shortage',
                       shortage.toString(),
-                      shortage > 0 ? Colors.red : const Color.fromARGB(255, 0, 0, 0),
+                      shortage > 0
+                          ? Colors.red
+                          : const Color.fromARGB(255, 0, 0, 0),
                     ),
                   ],
                 ),
@@ -557,26 +576,39 @@ class _RegionAssetEntryScreenState
         child: imagePath != null && imagePath.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(imagePath),
-                  fit: BoxFit.cover,
-                ),
+                child: imagePath.startsWith('http')
+                    ? Image.network(
+                        imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildPhotoPlaceholder(number),
+                      )
+                    : Image.file(
+                        File(imagePath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildPhotoPlaceholder(number),
+                      ),
               )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo, color: Colors.grey[600]),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Photo $number',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
+            : _buildPhotoPlaceholder(number),
       ),
+    );
+  }
+
+  Widget _buildPhotoPlaceholder(int number) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo, color: Colors.grey[600]),
+        const SizedBox(height: 4),
+        Text(
+          'Photo $number',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 

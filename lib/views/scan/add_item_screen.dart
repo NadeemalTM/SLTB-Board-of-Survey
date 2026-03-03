@@ -7,6 +7,7 @@ import '../../core/constants/survey_status.dart';
 import '../../widgets/region_selector.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/storage_service.dart';
+import '../../providers/connectivity_provider.dart';
 
 class AddItemScreen extends ConsumerStatefulWidget {
   final String? scannedCode;
@@ -86,6 +87,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
     setState(() => _isSaving = true);
 
+    // Mark as pending in sync tracker
+    final syncNotifier = ref.read(syncStatusProvider.notifier);
+    final assetCode = _newCodeController.text;
+    final assetDesc = _descriptionController.text;
+    syncNotifier.markPending(assetCode, assetDesc);
+
     try {
       final firestore = FirestoreService();
       List<String> validImages =
@@ -96,7 +103,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       try {
         final storageService = StorageService();
         photoUrls = await storageService.uploadAllPhotos(
-          assetCode: _newCodeController.text,
+          assetCode: assetCode,
           image1Path: _images[0],
           image2Path: _images[1],
           image3Path: _images[2],
@@ -110,9 +117,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           photoUrls.where((url) => url != null).cast<String>().toList();
 
       await firestore.addAsset(
-        newCode: _newCodeController.text,
+        newCode: assetCode,
         oldCode: _oldCodeController.text,
-        description: _descriptionController.text,
+        description: assetDesc,
         mainRegion: _selectedMainRegion,
         subRegion: _selectedSubRegion,
         bookBalance: int.parse(_bookBalanceController.text),
@@ -122,18 +129,28 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
         photoUrls: photoDownloadUrls,
       );
 
+      // Mark as synced
+      syncNotifier.markSynced(assetCode, assetDesc);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Asset Saved to Cloud!'),
+              content: Text('\u2705 Asset Saved & Synced to Cloud!'),
               backgroundColor: Colors.green),
         );
         Navigator.pop(context);
       }
     } catch (e) {
+      // Mark as failed
+      syncNotifier.markFailed(assetCode, assetDesc, e.toString());
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+          SnackBar(
+            content: Text('\u274c Save failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

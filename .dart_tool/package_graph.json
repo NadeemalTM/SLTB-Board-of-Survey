@@ -8,6 +8,7 @@
       "version": "1.0.0+1",
       "dependencies": [
         "cloud_firestore",
+        "connectivity_plus",
         "csv",
         "cupertino_icons",
         "file_picker",
@@ -176,6 +177,19 @@
       "version": "3.1.2",
       "dependencies": [
         "flutter"
+      ]
+    },
+    {
+      "name": "connectivity_plus",
+      "version": "6.1.5",
+      "dependencies": [
+        "collection",
+        "connectivity_plus_platform_interface",
+        "flutter",
+        "flutter_web_plugins",
+        "meta",
+        "nm",
+        "web"
       ]
     },
     {
@@ -881,6 +895,29 @@
       ]
     },
     {
+      "name": "nm",
+      "version": "0.5.0",
+      "dependencies": [
+        "dbus"
+      ]
+    },
+    {
+      "name": "connectivity_plus_platform_interface",
+      "version": "2.0.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "permission_handler_platform_interface",
       "version": "4.3.0",
       "dependencies": [
@@ -953,13 +990,6 @@
     {
       "name": "flutter_plugin_android_lifecycle",
       "version": "2.0.33",
-      "dependencies": [
-        "flutter"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
       "dependencies": [
         "flutter"
       ]
@@ -1365,6 +1395,16 @@
         "firebase_core_platform_interface",
         "flutter",
         "meta"
+      ]
+    },
+    {
+      "name": "dbus",
+      "version": "0.7.12",
+      "dependencies": [
+        "args",
+        "ffi",
+        "meta",
+        "xml"
       ]
     },
     {

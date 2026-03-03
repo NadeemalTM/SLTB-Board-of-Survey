@@ -6,6 +6,7 @@ import '../auth/login_screen.dart';
 import 'region_scan_screen.dart';
 import 'region_asset_entry_screen.dart';
 import '../scan/asset_search_screen.dart';
+import '../../widgets/sync_status_banner.dart';
 
 /// Region Officer Dashboard - Main screen for regional oversight
 class RegionDashboard extends ConsumerStatefulWidget {
@@ -132,6 +133,10 @@ class _RegionDashboardState extends ConsumerState<RegionDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Sync Status Banner
+                const SyncStatusBanner(),
+                const SizedBox(height: 12),
+
                 // Welcome Card
                 Card(
                   child: Padding(

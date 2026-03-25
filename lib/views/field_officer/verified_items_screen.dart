@@ -266,10 +266,8 @@ class _VerifiedItemsScreenState extends State<VerifiedItemsScreen> {
         cloudUrl,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          // Fallback to local file if network fails
-          if (localPath != null &&
-              localPath.isNotEmpty &&
-              !localPath.startsWith('http')) {
+          // Fallback to local file if network fails and localPath is available
+          if (localPath != null && localPath.isNotEmpty && !localPath.startsWith('http')) {
             return Image.file(
               File(localPath),
               fit: BoxFit.cover,

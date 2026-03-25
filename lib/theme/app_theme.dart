@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Custom Colors - Teal Green & Brown-Tan
@@ -12,6 +13,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
     colorScheme: const ColorScheme.light(
       primary: primaryGreen,
       secondary: secondaryGold,
@@ -68,6 +70,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
     colorScheme: const ColorScheme.dark(
       primary: lightGreen,
       secondary: secondaryGold,

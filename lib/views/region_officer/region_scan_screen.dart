@@ -37,6 +37,7 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
   );
   bool _isProcessing = false;
   bool _hasPermission = true;
+  double _zoomFactor = 0.0;
   final TextEditingController _manualCodeController = TextEditingController();
 
   @override
@@ -311,6 +312,39 @@ class _RegionScanScreenState extends State<RegionScanScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                    ),
+                  ),
+                ),
+
+                // Zoom Slider
+                Positioned(
+                  bottom: 120,
+                  left: 24,
+                  right: 24,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.zoom_out, color: Colors.white),
+                        Expanded(
+                          child: Slider(
+                            value: _zoomFactor,
+                            activeColor: const Color(0xFF4CAF50),
+                            inactiveColor: Colors.white54,
+                            onChanged: (value) {
+                              setState(() {
+                                _zoomFactor = value;
+                                cameraController.setZoomScale(value);
+                              });
+                            },
+                          ),
+                        ),
+                        const Icon(Icons.zoom_in, color: Colors.white),
+                      ],
                     ),
                   ),
                 ),

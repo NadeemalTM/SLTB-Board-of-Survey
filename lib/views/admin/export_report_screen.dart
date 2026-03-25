@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/utils/csv_helper.dart';
-import '../../data/database/database_helper.dart';
+
+import '../../data/models/asset_model.dart';
+import '../../core/constants/survey_status.dart';
 
 /// Export Report Screen - Generate and download survey reports
 class ExportReportScreen extends ConsumerStatefulWidget {
@@ -17,6 +21,53 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
   String? _resultMessage;
   bool _isSuccess = false;
 
+  String _selectedYear = 'All';
+  List<String> _availableYears = ['All'];
+  bool _isLoadingYears = true;
+
+  String _selectedStatus = 'All';
+  late final List<String> _availableStatuses;
+
+  @override
+  void initState() {
+    super.initState();
+    _availableStatuses = ['All', ...SurveyStatus.allValues];
+    _loadAvailableYears();
+  }
+
+  Future<void> _loadAvailableYears() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collectionGroup('assets').get();
+      final assets = snapshot.docs.map((doc) {
+        final data = doc.data();
+        if (!data.containsKey('newCode')) {
+          data['newCode'] = doc.id;
+        }
+        return AssetModel.fromFirestore(data);
+      }).toList();
+
+      final Set<String> years = {'2023', '2024', '2025', '2026'}; // Always include these base years
+      for (var asset in assets) {
+        if (asset.lastUpdatedDate != null && asset.lastUpdatedDate!.length >= 4) {
+          years.add(asset.lastUpdatedDate!.substring(0, 4));
+        } else if (asset.enteredDate != null && asset.enteredDate!.length >= 4) {
+          years.add(asset.enteredDate!.substring(0, 4));
+        }
+      }
+      final sortedYears = years.toList()..sort((a, b) => b.compareTo(a)); // Descending
+      setState(() {
+        _availableYears = ['All', ...sortedYears];
+        _isLoadingYears = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingYears = false;
+        });
+      }
+    }
+  }
+
   Future<void> _exportReport() async {
     setState(() {
       _isExporting = true;
@@ -24,11 +75,55 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
     });
 
     try {
-      // Get all assets from database
-      final db = DatabaseHelper.instance;
-      final assets = await db.getAssetsFiltered();
+      List<AssetModel> assetsForExport = [];
 
-      if (assets.isEmpty) {
+      // Check if we are exporting historical Firebase data directly
+      if (['2023', '2024'].contains(_selectedYear)) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('assets')
+            .doc(_selectedYear)
+            .collection('SLTB')
+            .doc('BOS')
+            .collection('MT')
+            .get();
+
+        assetsForExport = snapshot.docs.map((doc) {
+          final data = doc.data();
+          // Provide some standard mapping if historical data lacks newCode field, use ID
+          if (!data.containsKey('newCode')) {
+            data['newCode'] = doc.id; 
+          }
+          return AssetModel.fromFirestore(data);
+        }).toList();
+        
+      } else {
+        // Fetch directly from Firebase
+        final snapshot = await FirebaseFirestore.instance.collectionGroup('assets').get();
+        var assets = snapshot.docs.map((doc) {
+          final data = doc.data();
+          if (!data.containsKey('newCode')) {
+            data['newCode'] = doc.id;
+          }
+          return AssetModel.fromFirestore(data);
+        }).toList();
+
+        if (_selectedYear != 'All') {
+          assets = assets.where((asset) {
+            final dateStr = asset.lastUpdatedDate ?? asset.enteredDate ?? '';
+            return dateStr.startsWith(_selectedYear);
+          }).toList();
+        }
+        assetsForExport = assets;
+      }
+
+      if (_selectedStatus != 'All') {
+        assetsForExport = assetsForExport.where((asset) {
+          final statusStr = asset.surveyStatus ?? 'Good';
+          return statusStr.toLowerCase() == _selectedStatus.toLowerCase();
+        }).toList();
+      }
+
+      if (assetsForExport.isEmpty) {
         setState(() {
           _isExporting = false;
           _isSuccess = false;
@@ -38,20 +133,23 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
       }
 
       // Generate report CSV
-      final csvContent = CsvHelper.generateAdminReportCsv(assets);
+      final csvContent = CsvHelper.generateAdminReportCsv(assetsForExport);
 
       // Export to Downloads folder
       final filePath = await CsvHelper.exportToDownloads(
         csvContent,
-        'SLTB_Survey_Report_${DateTime.now().millisecondsSinceEpoch}',
+        'SLTB_Survey_Report_${_selectedYear}_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       setState(() {
         _isExporting = false;
         _isSuccess = true;
         _resultMessage =
-            'Successfully exported ${assets.length} records\n\nFile saved to:\n$filePath';
+            'Successfully exported ${assetsForExport.length} records\n\nFile saved to:\n$filePath';
       });
+
+      // Show system popup to easily check or share the report
+      await Share.shareXFiles([XFile(filePath)], subject: 'SLTB Survey Report - $_selectedYear');
     } catch (e) {
       setState(() {
         _isExporting = false;
@@ -68,10 +166,29 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
     });
 
     try {
-      final db = DatabaseHelper.instance;
-      
-      // Get all assets (for field officer to survey)
-      final assets = await db.getAssetsFiltered();
+      // Fetch directly from Firebase
+      final snapshot = await FirebaseFirestore.instance.collectionGroup('assets').get();
+      var assets = snapshot.docs.map((doc) {
+        final data = doc.data();
+        if (!data.containsKey('newCode')) {
+          data['newCode'] = doc.id;
+        }
+        return AssetModel.fromFirestore(data);
+      }).toList();
+
+      if (_selectedYear != 'All') {
+        assets = assets.where((asset) {
+          final dateStr = asset.lastUpdatedDate ?? asset.enteredDate ?? '';
+          return dateStr.startsWith(_selectedYear);
+        }).toList();
+      }
+
+      if (_selectedStatus != 'All') {
+        assets = assets.where((asset) {
+          final statusStr = asset.surveyStatus ?? 'Good';
+          return statusStr.toLowerCase() == _selectedStatus.toLowerCase();
+        }).toList();
+      }
 
       if (assets.isEmpty) {
         setState(() {
@@ -97,6 +214,9 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
         _resultMessage =
             'Successfully exported ${assets.length} assets for field work\n\nFile saved to:\n$filePath';
       });
+
+      // Show system popup to easily check or share the template
+      await Share.shareXFiles([XFile(filePath)], subject: 'Field Officer Template - $officerUsername');
     } catch (e) {
       setState(() {
         _isExporting = false;
@@ -158,6 +278,104 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Filters Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Column(
+                  children: [
+                    // Year Filter
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.blue),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          flex: 2,
+                          child: Text(
+                            'Filter by Year:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: _isLoadingYears 
+                              ? const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: SizedBox(
+                                    height: 20, 
+                                    width: 20, 
+                                    child: CircularProgressIndicator(strokeWidth: 2)
+                                  ),
+                                ) 
+                              : DropdownButton<String>(
+                                  value: _selectedYear,
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  items: _availableYears.map((String year) {
+                                    return DropdownMenuItem<String>(
+                                      value: year,
+                                      child: Text(year == 'All' ? 'All Years' : year),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _selectedYear = newValue;
+                                      });
+                                    }
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    // Status Filter
+                    Row(
+                      children: [
+                        Icon(Icons.assignment_turned_in, color: Colors.green[700]),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          flex: 2,
+                          child: Text(
+                            'Filter by Status:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: DropdownButton<String>(
+                            value: _selectedStatus,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: _availableStatuses.map((String status) {
+                              return DropdownMenuItem<String>(
+                                value: status,
+                                child: Text(status == 'All' ? 'All Statuses' : status),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  _selectedStatus = newValue;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Admin Report Export
             Card(
               child: Padding(

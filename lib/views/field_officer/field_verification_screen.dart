@@ -76,9 +76,9 @@ class _FieldOfficerVerificationScreenState
   Future<void> _pickImage(int imageNumber) async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1080,
-      imageQuality: 85,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 70, // Optimized compression standard
     );
 
     if (image != null) {
@@ -169,10 +169,10 @@ class _FieldOfficerVerificationScreenState
       if (photoUrls[1] != null) updateData['photoUrl2'] = photoUrls[1];
       if (photoUrls[2] != null) updateData['photoUrl3'] = photoUrls[2];
 
-      // Store local paths too
-      if (_image1Path != null) updateData['imagePath1'] = _image1Path;
-      if (_image2Path != null) updateData['imagePath2'] = _image2Path;
-      if (_image3Path != null) updateData['imagePath3'] = _image3Path;
+      // Save Firebase URLs into paths so they aren't manually bound to the local device
+      if (photoUrls[0] != null) updateData['imagePath1'] = photoUrls[0];
+      if (photoUrls[1] != null) updateData['imagePath2'] = photoUrls[1];
+      if (photoUrls[2] != null) updateData['imagePath3'] = photoUrls[2];
 
       // Update approval level if verified
       if (verificationStatus == 'verified') {
@@ -668,10 +668,15 @@ class _FieldOfficerVerificationScreenState
         child: imagePath != null && imagePath.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(imagePath),
-                  fit: BoxFit.cover,
-                ),
+                child: imagePath.startsWith('http')
+                    ? Image.network(
+                        imagePath,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.file(
+                        File(imagePath),
+                        fit: BoxFit.cover,
+                      ),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,

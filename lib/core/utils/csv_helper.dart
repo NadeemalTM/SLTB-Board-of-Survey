@@ -205,19 +205,15 @@ class CsvHelper {
     try {
       // Get external storage directory (Android)
       // For iOS, this will use the app's documents directory
-      Directory? externalDir;
+      late Directory externalDir;
       
       if (Platform.isAndroid) {
-        externalDir = Directory('/storage/emulated/0/Download');
+        externalDir = Directory('/storage/emulated/0/Download/SLTB_Reports');
         if (!await externalDir.exists()) {
-          externalDir = await getExternalStorageDirectory();
+          await externalDir.create(recursive: true);
         }
       } else {
         externalDir = await getApplicationDocumentsDirectory();
-      }
-
-      if (externalDir == null) {
-        throw Exception('Could not access external storage');
       }
 
       final destPath = '${externalDir.path}/$filename.csv';

@@ -16,6 +16,7 @@
         "flutter",
         "flutter_riverpod",
         "flutter_slidable",
+        "google_fonts",
         "http",
         "image_picker",
         "intl",
@@ -130,6 +131,16 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "google_fonts",
+      "version": "8.0.2",
+      "dependencies": [
+        "crypto",
+        "flutter",
+        "http",
+        "path_provider"
       ]
     },
     {

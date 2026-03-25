@@ -83,9 +83,9 @@ class _RegionAssetEntryScreenState
   Future<void> _pickImage(int imageNumber) async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1080,
-      imageQuality: 85,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 70, // Optimized compression standard
     );
 
     if (image != null) {
@@ -127,6 +127,22 @@ class _RegionAssetEntryScreenState
 
       final now = DateTime.now().toIso8601String();
 
+      // Upload photos to Firebase Storage FIRST
+      List<String?> photoUrls = [null, null, null];
+      bool photosUploaded = false;
+      try {
+        final storageService = StorageService();
+        photoUrls = await storageService.uploadAllPhotos(
+          assetCode: widget.scannedCode,
+          image1Path: _image1Path,
+          image2Path: _image2Path,
+          image3Path: _image3Path,
+        );
+        photosUploaded = photoUrls.any((url) => url != null);
+      } catch (e) {
+        print('[RegionEntry] Photo upload failed: $e');
+      }
+
       final AssetModel assetToSave;
 
       if (widget.asset != null) {
@@ -140,9 +156,9 @@ class _RegionAssetEntryScreenState
           shortage: shortage,
           remarks: _remarksController.text.trim(),
           surveyStatus: _selectedStatus,
-          imagePath1: _image1Path,
-          imagePath2: _image2Path,
-          imagePath3: _image3Path,
+          imagePath1: photoUrls[0] ?? _image1Path,
+          imagePath2: photoUrls[1] ?? _image2Path,
+          imagePath3: photoUrls[2] ?? _image3Path,
           enteredBy: widget.asset!.enteredBy ?? username,
           enteredDate: widget.asset!.enteredDate ?? now,
           verificationStatus: 'pending', // Reset to pending when updated
@@ -164,9 +180,9 @@ class _RegionAssetEntryScreenState
           shortage: shortage,
           remarks: _remarksController.text.trim(),
           surveyStatus: _selectedStatus,
-          imagePath1: _image1Path,
-          imagePath2: _image2Path,
-          imagePath3: _image3Path,
+          imagePath1: photoUrls[0],
+          imagePath2: photoUrls[1],
+          imagePath3: photoUrls[2],
           enteredBy: username,
           enteredDate: now,
           verificationStatus: 'pending',
@@ -174,22 +190,6 @@ class _RegionAssetEntryScreenState
           lastUpdatedDate: now,
           isNewItem: widget.asset == null ? 1 : widget.asset!.isNewItem,
         );
-      }
-
-      // Upload photos to Firebase Storage
-      List<String?> photoUrls = [null, null, null];
-      bool photosUploaded = false;
-      try {
-        final storageService = StorageService();
-        photoUrls = await storageService.uploadAllPhotos(
-          assetCode: widget.scannedCode,
-          image1Path: _image1Path,
-          image2Path: _image2Path,
-          image3Path: _image3Path,
-        );
-        photosUploaded = photoUrls.any((url) => url != null);
-      } catch (e) {
-        print('[RegionEntry] Photo upload failed: $e');
       }
 
       // Save to local database

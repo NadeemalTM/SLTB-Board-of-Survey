@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../admin/admin_dashboard.dart';
 import '../field_officer/dashboard_screen.dart';
@@ -61,6 +62,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final dump = await FirebaseFirestore.instance.collection('users').get();
+      print('--- START USER DUMP ---');
+      for (var doc in dump.docs) {
+        print('USER DOC: ${doc.id} => ${doc.data()}');
+      }
+      print('--- END USER DUMP ---');
+    } catch (e) {
+      print('Dump error: $e');
+    }
+
 
     final success = await ref.read(authProvider.notifier).login(
           _usernameController.text.trim(),

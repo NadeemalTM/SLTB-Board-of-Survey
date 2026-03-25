@@ -62,8 +62,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
   Future<void> _pickImage(int index) async {
     try {
-      final XFile? image =
-          await _picker.pickImage(source: ImageSource.camera, imageQuality: 40);
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70, // Optimized compression standard
+      );
       if (image != null) {
         setState(() => _images[index] = image.path);
       }
@@ -88,9 +92,6 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
     try {
       final firestore = FirestoreService();
-      List<String> validImages =
-          _images.where((path) => path != null).cast<String>().toList();
-
       // Upload photos to Firebase Storage
       List<String?> photoUrls = [null, null, null];
       try {
@@ -118,7 +119,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
         bookBalance: int.parse(_bookBalanceController.text),
         physicalBalance: int.parse(_physicalBalanceController.text),
         status: _selectedStatus,
-        imagePaths: validImages,
+        imagePaths: photoDownloadUrls, // Save URLs explicitly instead of local files
         photoUrls: photoDownloadUrls,
       );
 
@@ -378,7 +379,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           border: Border.all(color: Colors.grey[400]!),
           image: _images[index] != null
               ? DecorationImage(
-                  image: FileImage(File(_images[index]!)),
+                  image: _images[index]!.startsWith('http')
+                      ? NetworkImage(_images[index]!) as ImageProvider
+                      : FileImage(File(_images[index]!)),
                   fit: BoxFit.cover,
                 )
               : null,

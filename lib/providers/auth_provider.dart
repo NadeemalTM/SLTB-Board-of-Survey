@@ -19,9 +19,9 @@ class AppUser {
 
   // --- HELPERS FOR DASHBOARD COMPATIBILITY ---
   bool get isAdmin => role == 'Admin';
-  
+
   // FIXED: Added displayName (it just returns the username)
-  String get displayName => username; 
+  String get displayName => username;
 }
 
 // 2. THE AUTH STATE
@@ -35,11 +35,12 @@ class AuthState {
   // Helpers
   bool get isAuthenticated => user != null;
   bool get isAdmin => user?.role == 'Admin';
-  bool get isRegionOfficer => user?.role == 'Region Officer' || user?.role == 'Officer';
+  bool get isRegionOfficer =>
+      user?.role == 'Region Officer' || user?.role == 'Officer';
   bool get isFieldOfficer => user?.role == 'Field Officer';
 
   // FIXED: Alias for compatibility
-  AppUser? get currentUser => user; 
+  AppUser? get currentUser => user;
 }
 
 // 3. THE PROVIDER
@@ -62,12 +63,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
           .get();
 
       if (snapshot.docs.isEmpty) {
-        state = AuthState(isLoading: false, errorMessage: "Invalid Username or Password");
+        state = AuthState(
+            isLoading: false, errorMessage: "Invalid Username or Password");
         return false;
       }
 
       final data = snapshot.docs.first.data();
-      
+
       final user = AppUser(
         id: snapshot.docs.first.id,
         username: data['username'] ?? '',
@@ -78,7 +80,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       state = AuthState(user: user, isLoading: false);
       return true;
-
     } catch (e) {
       state = AuthState(isLoading: false, errorMessage: e.toString());
       return false;

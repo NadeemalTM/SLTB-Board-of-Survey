@@ -218,7 +218,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
 
                 _buildActionCard(
                   icon: Icons.upload_file,
-                  title: 'Import Master Data',
+                  title: 'Upload Master Data',
                   subtitle: 'Upload master CSV file with asset list',
                   color: const Color(0xFF0C3B2E),
                   onTap: () {
@@ -248,7 +248,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
                 const SizedBox(height: 12),
                 _buildActionCard(
                   icon: Icons.download,
-                  title: 'Export Reports',
+                  title: 'Download Reports',
                   subtitle: 'Generate and download survey reports',
                   color: Colors.green,
                   onTap: () {
@@ -277,7 +277,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.15,
       children: [
         _buildStatCard(
           'Total Assets',
@@ -316,7 +316,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

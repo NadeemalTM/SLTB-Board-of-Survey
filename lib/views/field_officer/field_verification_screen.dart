@@ -7,6 +7,7 @@ import '../../data/models/asset_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/survey_status.dart';
 import '../../services/storage_service.dart';
+import '../../providers/connectivity_provider.dart';
 
 /// Field Officer Verification Screen
 /// Used by field officers to verify data entered by regional officers
@@ -114,6 +115,12 @@ class _FieldOfficerVerificationScreenState
       _isSaving = true;
     });
 
+    // Mark as pending in sync tracker
+    final syncNotifier = ref.read(syncStatusProvider.notifier);
+    final desc = widget.asset.description;
+    final newCode = widget.asset.newCode;
+    syncNotifier.markPending(newCode, desc);
+
     try {
       final authState = ref.read(authProvider);
       final username = authState.currentUser?.username ?? 'unknown';
@@ -220,20 +227,27 @@ class _FieldOfficerVerificationScreenState
 
       if (mounted) {
         if (updated) {
+          // Mark as synced
+          syncNotifier.markSynced(newCode, desc);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 verificationStatus == 'verified'
-                    ? 'Asset verified successfully'
-                    : 'Asset updated and marked for correction',
+                    ? '✅ Asset verified & synced'
+                    : '✅ Asset updated & synced',
               ),
               backgroundColor: Colors.green,
             ),
           );
         } else {
+          // Mark as failed — couldn't find document
+          syncNotifier.markFailed(
+              newCode, desc, 'Document not found in Firebase');
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Could not find asset in Firebase'),
+              content: Text('⚠️ Could not find asset in Firebase'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -241,10 +255,13 @@ class _FieldOfficerVerificationScreenState
         Navigator.pop(context, true);
       }
     } catch (e) {
+      // Mark as failed
+      syncNotifier.markFailed(newCode, desc, e.toString());
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving: ${e.toString()}'),
+            content: Text('❌ Sync failed: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

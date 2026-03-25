@@ -4,6 +4,7 @@ import '../../services/firestore_service.dart';
 import '../../core/constants/survey_status.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/region_selector.dart';
+import '../../providers/connectivity_provider.dart';
 
 class EditAssetScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> data;
@@ -66,6 +67,12 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
     }
 
     setState(() => _isSaving = true);
+
+    // Mark as pending in sync tracker
+    final syncNotifier = ref.read(syncStatusProvider.notifier);
+    final desc = widget.data['description'] ?? 'Unknown';
+    syncNotifier.markPending(widget.docId, desc);
+
     try {
       await FirestoreService().updateAsset(
         widget.docId,
@@ -74,17 +81,27 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
         _remarksController.text,
       );
 
+      // Mark as synced
+      syncNotifier.markSynced(widget.docId, desc);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Verification Saved!'),
+            content: Text('✅ Verification Saved & Synced!'),
             backgroundColor: Colors.green));
         Navigator.pop(context);
         Navigator.pop(context);
       }
     } catch (e) {
+      // Mark as failed
+      syncNotifier.markFailed(widget.docId, desc, e.toString());
+
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Save failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {

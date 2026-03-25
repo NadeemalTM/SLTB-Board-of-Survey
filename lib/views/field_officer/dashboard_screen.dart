@@ -8,6 +8,7 @@ import '../scan/add_item_screen.dart';
 import '../auth/login_screen.dart';
 import 'verified_items_screen.dart';
 import '../scan/asset_search_screen.dart';
+import '../../widgets/sync_status_banner.dart';
 
 /// Field Officer Dashboard - mirrored to Region Officer dashboard style
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -101,6 +102,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Sync Status Banner
+                const SyncStatusBanner(),
+                const SizedBox(height: 12),
+
                 // Welcome Card
                 Card(
                   child: Padding(
